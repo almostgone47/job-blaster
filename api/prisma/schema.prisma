@@ -1,0 +1,98 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum JobStatus {
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum AppStatus {
+  DRAFT
+  APPLIED
+  INTERVIEW
+  OA
+  OFFER
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  createdAt    DateTime      @default(now())
+  resumes      Resume[]
+  jobs         Job[]
+  applications Application[]
+  templates    Template[]
+}
+
+model Resume {
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  fileUrl      String
+  createdAt    DateTime      @default(now())
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+}
+
+model Job {
+  id             String        @id @default(cuid())
+  userId         String
+  title          String
+  company        String
+  url            String
+  source         String?
+  location       String?
+  salary         String?
+  tags           String[]
+  status         JobStatus     @default(SAVED)
+  faviconUrl     String?
+  notes          String?
+  lastActivityAt DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications   Application[]
+
+  @@index([userId, status, createdAt])
+  @@index([userId, lastActivityAt])
+}
+
+model Application {
+  id         String    @id @default(cuid())
+  userId     String
+  jobId      String
+  resumeId   String?
+  coverNote  String?
+  status     AppStatus @default(APPLIED)
+  appliedAt  DateTime?
+  nextAction DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job        Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume     Resume?   @relation(fields: [resumeId], references: [id])
+
+  @@index([userId, nextAction])
+  @@index([userId, status])
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  body      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
