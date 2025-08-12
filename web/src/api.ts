@@ -56,5 +56,17 @@ export async function parseUrl(url: string) {
   }>;
 }
 
+export async function getApplicationsDueToday(): Promise<Application[]> {
+  const r = await fetch(`${API}/applications?due=today`, {headers});
+  if (!r.ok) throw new Error('Failed to get applications due today');
+  return r.json();
+}
+
+export async function exportJobsCSV(): Promise<Blob> {
+  const r = await fetch(`${API}/jobs/export`, {headers});
+  if (!r.ok) throw new Error('Failed to export jobs');
+  return r.blob();
+}
+
 // types import
-import type {Job} from './types';
+import type {Job, Application} from './types';

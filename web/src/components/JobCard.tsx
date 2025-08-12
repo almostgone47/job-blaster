@@ -29,40 +29,44 @@ export default function JobCard({
   const left = prevStatus(job.status);
 
   return (
-    <div className="rounded-lg border bg-white p-3 shadow-sm">
-      <div className="flex items-start gap-2">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
+      <div className="flex items-start gap-3">
         {job.faviconUrl ? (
-          <img src={job.faviconUrl} className="h-5 w-5 rounded-sm" />
+          <img
+            src={job.faviconUrl}
+            className="h-6 w-6 rounded-sm flex-shrink-0"
+          />
         ) : (
-          <div className="h-5 w-5 rounded-sm bg-gray-200" />
+          <div className="h-6 w-6 rounded-sm bg-gray-200 flex-shrink-0" />
         )}
-        <div className="min-w-0">
-          <div className="truncate font-medium">{job.title}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium text-gray-900">{job.title}</div>
           <div className="truncate text-sm text-gray-600">{job.company}</div>
         </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
         <a
           href={job.url}
           target="_blank"
-          className="text-xs text-blue-600 hover:underline"
+          rel="noopener noreferrer"
+          className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
-          Open
+          Open Job
         </a>
         {job.status === 'SAVED' && (
           <button
             onClick={() => onMarkApplied(job.id)}
-            className="rounded bg-green-600 px-2 py-1 text-xs text-white"
+            className="rounded-md bg-green-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-green-700 transition-colors"
           >
             Mark Applied
           </button>
         )}
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-1">
           {left && (
             <button
               onClick={() => onMove(job.id, left)}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50"
+              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
               title={`Move to ${left}`}
             >
               ← {left}
@@ -71,7 +75,7 @@ export default function JobCard({
           {right && (
             <button
               onClick={() => onMove(job.id, right)}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50"
+              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
               title={`Move to ${right}`}
             >
               {right} →
