@@ -63,12 +63,16 @@ export default function JobCard({
   onEdit,
   onTrackApplication,
   hasApplication,
+  isSnoozed = false,
+  onUnsnooze,
 }: {
   job: Job;
   onMove: (id: string, status: JobStatus) => void;
   onEdit: (job: Job) => void;
   onTrackApplication: (job: Job) => void;
   hasApplication: boolean;
+  isSnoozed?: boolean;
+  onUnsnooze?: () => void;
 }) {
   const right = nextStatus(job.status);
   const left = prevStatus(job.status);
@@ -136,6 +140,24 @@ export default function JobCard({
       {job.notes && (
         <div className="mt-3 p-2 bg-gray-700/50 rounded text-sm text-gray-300 border-l-2 border-blue-500">
           {job.notes}
+        </div>
+      )}
+
+      {isSnoozed && (
+        <div className="mt-3 p-2 bg-gray-700/50 rounded text-sm text-gray-400 border-l-2 border-gray-500 flex items-center justify-between">
+          <span>🔕 Snoozed - Not showing in urgent alerts</span>
+          {onUnsnooze && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onUnsnooze();
+              }}
+              className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded hover:bg-gray-600 transition-colors"
+              title="Show in urgent alerts again"
+            >
+              Wake Up
+            </button>
+          )}
         </div>
       )}
 

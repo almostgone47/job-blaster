@@ -9,6 +9,10 @@ import ResumeModal from '../components/ResumeModal';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
+import {
+  usePersistentBoolean,
+  usePersistentSet,
+} from '../hooks/usePersistentState';
 
 const COLUMNS: JobStatus[] = [
   'SAVED',
@@ -48,12 +52,17 @@ export default function Dashboard() {
   const [editJob, setEditJob] = useState<Job | null>(null);
   const [applicationModalOpen, setApplicationModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [resumeModalOpen, setResumeModalOpen] = useState(false);
-  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
-  const [deadlineAlertsOpen, setDeadlineAlertsOpen] = useState(false);
-  const [snoozedDeadlines, setSnoozedDeadlines] = useState<Set<string>>(
-    new Set(),
+  const [resumeModalOpen, setResumeModalOpen] = usePersistentBoolean(
+    'resumeModalOpen',
+    false,
   );
+  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
+  const [deadlineAlertsOpen, setDeadlineAlertsOpen] = usePersistentBoolean(
+    'deadlineAlertsOpen',
+    false,
+  );
+  const [snoozedDeadlines, setSnoozedDeadlines] =
+    usePersistentSet<string>('snoozedDeadlines');
 
   // Group jobs by status for quick render
   const jobsByStatus = useMemo(() => {
@@ -128,6 +137,20 @@ export default function Dashboard() {
   function handleTrackApplication(job: Job) {
     setSelectedJob(job);
     setApplicationModalOpen(true);
+  }
+
+  // Clear all snoozed deadlines
+  function clearSnoozedDeadlines() {
+    setSnoozedDeadlines(new Set());
+  }
+
+  // Unsnooze a specific job
+  function unsnoozeJob(jobId: string) {
+    setSnoozedDeadlines((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(jobId);
+      return newSet;
+    });
   }
 
   // CSV Export functionality
@@ -228,6 +251,12 @@ export default function Dashboard() {
           >
             Add Job
           </button>
+          {snoozedDeadlines.size > 0 && (
+            <div className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+              {snoozedDeadlines.size} snoozed alert
+              {snoozedDeadlines.size !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           {/* Deadline Alerts Bell */}
@@ -342,6 +371,8 @@ export default function Dashboard() {
                                   }
                                   onTrackApplication={handleTrackApplication}
                                   hasApplication={hasApplication(j)}
+                                  isSnoozed={snoozedDeadlines.has(j.id)}
+                                  onUnsnooze={() => unsnoozeJob(j.id)}
                                 />
                               </div>
                             )}
@@ -422,12 +453,23 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-white">
                   ⏰ Deadline Alerts
                 </h2>
-                <button
-                  onClick={() => setDeadlineAlertsOpen(false)}
-                  className="text-sm text-gray-400 hover:text-gray-300"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  {snoozedDeadlines.size > 0 && (
+                    <button
+                      onClick={clearSnoozedDeadlines}
+                      className="text-xs text-gray-400 hover:text-gray-300 px-2 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors"
+                      title={`Clear ${snoozedDeadlines.size} snoozed alerts`}
+                    >
+                      Clear Snoozed ({snoozedDeadlines.size})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setDeadlineAlertsOpen(false)}
+                    className="text-sm text-gray-400 hover:text-gray-300"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3 max-h-96 overflow-y-auto">
