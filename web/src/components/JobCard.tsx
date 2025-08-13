@@ -7,10 +7,12 @@ const ORDER: JobStatus[] = [
   'OFFER',
   'REJECTED',
 ];
+
 function nextStatus(s: JobStatus): JobStatus | null {
   const i = ORDER.indexOf(s);
   return i >= 0 && i < ORDER.length - 1 ? ORDER[i + 1] : null;
 }
+
 function prevStatus(s: JobStatus): JobStatus | null {
   const i = ORDER.indexOf(s);
   return i > 0 ? ORDER[i - 1] : null;
@@ -19,54 +21,73 @@ function prevStatus(s: JobStatus): JobStatus | null {
 export default function JobCard({
   job,
   onMove,
-  onMarkApplied,
+  onEdit,
 }: {
   job: Job;
   onMove: (id: string, status: JobStatus) => void;
-  onMarkApplied: (id: string) => void;
+  onEdit: (job: Job) => void;
 }) {
   const right = nextStatus(job.status);
   const left = prevStatus(job.status);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
+    <div
+      className="rounded-lg border border-gray-600 bg-gray-800 p-4 shadow-md hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => onEdit(job)}
+    >
       <div className="flex items-start gap-3">
         {job.faviconUrl ? (
           <img
             src={job.faviconUrl}
             className="h-6 w-6 rounded-sm flex-shrink-0"
+            alt={`${job.company} logo`}
           />
         ) : (
-          <div className="h-6 w-6 rounded-sm bg-gray-200 flex-shrink-0" />
+          <div className="h-6 w-6 rounded-sm bg-gray-600 flex-shrink-0" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate font-medium text-gray-900">{job.title}</div>
-          <div className="truncate text-sm text-gray-600">{job.company}</div>
+          <div className="truncate font-medium text-white group-hover:text-blue-300 transition-colors">
+            {job.title}
+          </div>
+          <div className="truncate text-sm text-gray-300">{job.company}</div>
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(job);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-400 p-1"
+          title="Edit job"
+        >
+          ✏️
+        </button>
       </div>
+
+      {job.notes && (
+        <div className="mt-3 p-2 bg-gray-700/50 rounded text-sm text-gray-300 border-l-2 border-blue-500">
+          {job.notes}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
         <a
           href={job.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+          className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium"
         >
           Open Job
         </a>
-        {job.status === 'SAVED' && (
-          <button
-            onClick={() => onMarkApplied(job.id)}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-xs  font-medium hover:bg-green-700 transition-colors"
-          >
-            Mark Applied
-          </button>
-        )}
+
         <div className="ml-auto flex gap-1">
           {left && (
             <button
-              onClick={() => onMove(job.id, left)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove(job.id, left);
+              }}
+              className="rounded border border-gray-500 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
               title={`Move to ${left}`}
             >
               ← {left}
@@ -74,8 +95,11 @@ export default function JobCard({
           )}
           {right && (
             <button
-              onClick={() => onMove(job.id, right)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove(job.id, right);
+              }}
+              className="rounded bg-green-600 px-2 py-1 text-xs text-white font-medium hover:bg-green-700 transition-colors"
               title={`Move to ${right}`}
             >
               {right} →

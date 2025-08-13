@@ -1,9 +1,10 @@
 import {useState, useMemo} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {listJobs, updateJob, createApplication} from '../api';
+import {listJobs, updateJob} from '../api';
 import type {Job, JobStatus} from '../types';
 import AddJobModal from '../components/AddJobModal';
-import QuickApplyModal from '../components/QuickApplyModal';
+import EditJobModal from '../components/EditJobModal';
+import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
 
@@ -32,7 +33,7 @@ export default function Dashboard() {
   } = useQuery({queryKey: ['jobs'], queryFn: listJobs});
 
   const [addOpen, setAddOpen] = useState(false);
-  const [applyForJobId, setApplyForJobId] = useState<string | null>(null);
+  const [editJob, setEditJob] = useState<Job | null>(null);
 
   // Group jobs by status for quick render
   const jobsByStatus = useMemo(() => {
@@ -68,12 +69,18 @@ export default function Dashboard() {
     onSettled: () => qc.invalidateQueries({queryKey: ['jobs']}),
   });
 
-  // Create application + auto-move to APPLIED
-  const applyMutation = useMutation({
-    mutationFn: ({jobId, coverNote}: {jobId: string; coverNote?: string}) =>
-      createApplication({jobId, coverNote}),
-    onSuccess: () => qc.invalidateQueries({queryKey: ['jobs']}),
-  });
+  // Edit job functionality
+  function handleEditJob(job: Job) {
+    setEditJob(job);
+  }
+
+  function handleCloseEdit() {
+    setEditJob(null);
+  }
+
+  function handleJobUpdated() {
+    qc.invalidateQueries({queryKey: ['jobs']});
+  }
 
   // CSV Export functionality
   const [exporting, setExporting] = useState(false);
@@ -139,15 +146,6 @@ export default function Dashboard() {
     }
   }
 
-  function onMarkApplied(jobId: string) {
-    setApplyForJobId(jobId);
-  }
-  async function confirmApply(coverNote?: string) {
-    if (!applyForJobId) return;
-    await applyMutation.mutateAsync({jobId: applyForJobId, coverNote});
-    setApplyForJobId(null);
-  }
-
   // Drag handler
   function onDragEnd(result: DropResult) {
     const {destination, source, draggableId} = result;
@@ -194,7 +192,7 @@ export default function Dashboard() {
       </div>
 
       {/* Horizontal Kanban with drag-and-drop */}
-      <div className="w-full overflow-x-auto bg-gray-950 pl-2">
+      <div className="w-full overflow-x-auto bg-gray-950 pl-1">
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex flex-row flex-nowrap gap-2 pb-4 items-start">
             {COLUMNS.map((status) => (
@@ -244,49 +242,19 @@ export default function Dashboard() {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`rounded-lg border border-gray-600 bg-gray-800 p-4 shadow-md hover:shadow-lg transition-all ${
+                                className={`${
                                   dragSnapshot.isDragging
-                                    ? 'opacity-75 rotate-2 shadow-xl'
+                                    ? 'opacity-75 rotate-2'
                                     : ''
                                 }`}
                               >
-                                <div className="flex items-start gap-3">
-                                  {j.faviconUrl ? (
-                                    <img
-                                      src={j.faviconUrl}
-                                      className="h-6 w-6 rounded-sm flex-shrink-0"
-                                    />
-                                  ) : (
-                                    <div className="h-6 w-6 rounded-sm bg-gray-200 flex-shrink-0" />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="truncate font-medium ">
-                                      {j.title}
-                                    </div>
-                                    <div className="truncate text-sm text-gray-300">
-                                      {j.company}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="mt-3 flex items-center gap-2 flex-wrap">
-                                  <a
-                                    href={j.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium"
-                                  >
-                                    Open Job
-                                  </a>
-                                  {j.status === 'SAVED' && (
-                                    <button
-                                      onClick={() => onMarkApplied(j.id)}
-                                      className="ml-auto rounded-md bg-green-600 px-3 py-1.5 text-xs  font-medium hover:bg-green-700 transition-colors"
-                                    >
-                                      Mark Applied
-                                    </button>
-                                  )}
-                                </div>
+                                <JobCard
+                                  job={j}
+                                  onEdit={handleEditJob}
+                                  onMove={(id, status) =>
+                                    moveMutation.mutate({id, status})
+                                  }
+                                />
                               </div>
                             )}
                           </Draggable>
@@ -307,10 +275,11 @@ export default function Dashboard() {
         onClose={() => setAddOpen(false)}
         onCreated={() => qc.invalidateQueries({queryKey: ['jobs']})}
       />
-      <QuickApplyModal
-        open={applyForJobId !== null}
-        onClose={() => setApplyForJobId(null)}
-        onSubmit={(note) => confirmApply(note)}
+      <EditJobModal
+        open={!!editJob}
+        job={editJob}
+        onClose={handleCloseEdit}
+        onUpdated={handleJobUpdated}
       />
     </div>
   );
