@@ -15,12 +15,36 @@ router.get('/jobs', async (req, res) => {
 
 router.post('/jobs', async (req, res) => {
   const userId = (req as any).userId as string;
-  const {title, company, url, source, faviconUrl} = req.body ?? {};
+  const {
+    title,
+    company,
+    url,
+    source,
+    faviconUrl,
+    salary,
+    location,
+    tags,
+    deadline,
+    notes,
+  } = req.body ?? {};
+
   if (!title || !company || !url)
     return res.status(400).json({error: 'title, company, url required'});
 
   const job = await prisma.job.create({
-    data: {userId, title, company, url, source, faviconUrl},
+    data: {
+      userId,
+      title,
+      company,
+      url,
+      source,
+      faviconUrl,
+      salary,
+      location,
+      tags: tags || [],
+      deadline: deadline ? new Date(deadline) : null,
+      notes,
+    },
   });
   res.status(201).json(job);
 });
@@ -34,9 +58,15 @@ router.patch('/jobs/:id', async (req, res) => {
   if (!existing || existing.userId !== userId)
     return res.status(404).json({error: 'not found'});
 
+  // Handle date conversion for deadline field
+  const updateData = {...patch, lastActivityAt: new Date()};
+  if (patch.deadline !== undefined) {
+    updateData.deadline = patch.deadline ? new Date(patch.deadline) : null;
+  }
+
   const job = await prisma.job.update({
     where: {id},
-    data: {...patch, lastActivityAt: new Date()},
+    data: updateData,
   });
   res.json(job);
 });

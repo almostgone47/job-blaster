@@ -25,6 +25,7 @@ export interface Job {
   tags: string[];
   faviconUrl?: string | null;
   notes?: string | null;
+  deadline?: string | null;
   status: JobStatus;
   createdAt: string;
   updatedAt: string;

@@ -28,6 +28,7 @@ export default function EditJobModal({
   const [salary, setSalary] = useState('');
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
+  const [deadline, setDeadline] = useState('');
 
   // Update form when job changes
   useEffect(() => {
@@ -39,6 +40,9 @@ export default function EditJobModal({
       setSalary(job.salary || '');
       setLocation(job.location || '');
       setTags(job.tags ? job.tags.join(', ') : '');
+      setDeadline(
+        job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+      );
     }
   }, [job]);
 
@@ -66,6 +70,7 @@ export default function EditJobModal({
         salary: salary || null,
         location: location || null,
         tags: tagsArray,
+        deadline: deadline || null,
       });
 
       onUpdated();
@@ -170,6 +175,18 @@ export default function EditJobModal({
                 className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">
+              Application Deadline
+            </label>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+            />
           </div>
 
           <div>

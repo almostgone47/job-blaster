@@ -143,6 +143,7 @@ export default function AddJobModal({
         salary: salary || null,
         location: location || null,
         tags: tagsArray,
+        deadline: deadline || null,
         notes: null, // We'll add notes editing later
       });
 

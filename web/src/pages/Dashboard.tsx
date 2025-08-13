@@ -50,6 +50,10 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
+  const [deadlineAlertsOpen, setDeadlineAlertsOpen] = useState(false);
+  const [snoozedDeadlines, setSnoozedDeadlines] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Group jobs by status for quick render
   const jobsByStatus = useMemo(() => {
@@ -145,6 +149,7 @@ export default function Dashboard() {
         'Salary',
         'Tags',
         'Notes',
+        'Deadline',
         'Created Date',
         'Last Activity',
       ];
@@ -162,6 +167,7 @@ export default function Dashboard() {
             `"${job.salary || ''}"`,
             `"${job.tags.join('; ') || ''}"`,
             `"${job.notes || ''}"`,
+            job.deadline ? new Date(job.deadline).toLocaleDateString() : '',
             new Date(job.createdAt).toLocaleDateString(),
             new Date(job.lastActivityAt).toLocaleDateString(),
           ].join(','),
@@ -214,8 +220,44 @@ export default function Dashboard() {
   return (
     <div className="min-h-full space-y-4 bg-gray-950">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Dashboard</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-white">Dashboard</h2>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white"
+          >
+            Add Job
+          </button>
+        </div>
         <div className="flex gap-2">
+          {/* Deadline Alerts Bell */}
+          {(() => {
+            const now = new Date();
+            const urgentDeadlines = jobs.filter((job) => {
+              if (!job.deadline || snoozedDeadlines.has(job.id)) return false;
+              const deadline = new Date(job.deadline);
+              const diffDays = Math.ceil(
+                (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+              );
+              return diffDays <= 3; // Show count for overdue, today, tomorrow, and this week
+            });
+
+            if (urgentDeadlines.length === 0) return null;
+
+            return (
+              <button
+                onClick={() => setDeadlineAlertsOpen(true)}
+                className="relative rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700 transition-colors"
+                title="View deadline alerts"
+              >
+                🔔
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {urgentDeadlines.length}
+                </span>
+              </button>
+            );
+          })()}
+
           <button
             onClick={() => {
               setSelectedResume(null);
@@ -231,12 +273,6 @@ export default function Dashboard() {
             disabled={exporting}
           >
             {exporting ? 'Exporting...' : 'Export CSV'}
-          </button>
-          <button
-            onClick={() => setAddOpen(true)}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white"
-          >
-            Add Job
           </button>
         </div>
       </div>
@@ -362,6 +398,105 @@ export default function Dashboard() {
           setSelectedResume(null);
         }}
       />
+
+      {/* Deadline Alerts Modal */}
+      {(() => {
+        const now = new Date();
+        const allDeadlines = jobs
+          .filter((job) => job.deadline && !snoozedDeadlines.has(job.id))
+          .sort(
+            (a, b) =>
+              new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime(),
+          );
+
+        if (allDeadlines.length === 0) return null;
+
+        return (
+          <div
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/30 ${
+              deadlineAlertsOpen ? '' : 'hidden'
+            }`}
+          >
+            <div className="w-full max-w-2xl rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">
+                  ⏰ Deadline Alerts
+                </h2>
+                <button
+                  onClick={() => setDeadlineAlertsOpen(false)}
+                  className="text-sm text-gray-400 hover:text-gray-300"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {allDeadlines.map((job) => {
+                  const deadline = new Date(job.deadline!);
+                  const diffDays = Math.ceil(
+                    (deadline.getTime() - now.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  );
+                  const isOverdue = diffDays < 0;
+                  const isUrgent = diffDays <= 3;
+
+                  return (
+                    <div
+                      key={job.id}
+                      className={`p-3 rounded border text-sm cursor-pointer hover:bg-gray-700/50 transition-colors ${
+                        isOverdue
+                          ? 'bg-red-900/20 border-red-600/50 text-red-300'
+                          : isUrgent
+                          ? 'bg-orange-900/20 border-orange-600/50 text-orange-300'
+                          : 'bg-gray-800/50 border-gray-600/50 text-gray-300'
+                      }`}
+                      onClick={() => {
+                        setEditJob(job);
+                        setDeadlineAlertsOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium">{job.title}</div>
+                          <div className="text-gray-400">{job.company}</div>
+                          <div className="mt-1">
+                            {isOverdue
+                              ? `Overdue by ${Math.abs(diffDays)} day${
+                                  Math.abs(diffDays) !== 1 ? 's' : ''
+                                }`
+                              : diffDays === 0
+                              ? 'Due today!'
+                              : diffDays === 1
+                              ? 'Due tomorrow'
+                              : `Due in ${diffDays} days`}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <div className="text-xs text-gray-400">
+                            {deadline.toLocaleDateString()}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSnoozedDeadlines(
+                                (prev) => new Set([...prev, job.id]),
+                              );
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+                            title="Snooze this alert"
+                          >
+                            ⏰
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

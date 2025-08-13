@@ -58,6 +58,7 @@ model Job {
   status         JobStatus     @default(SAVED)
   faviconUrl     String?
   notes          String?
+  deadline       DateTime?
   lastActivityAt DateTime      @default(now())
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -66,6 +67,7 @@ model Job {
 
   @@index([userId, status, createdAt])
   @@index([userId, lastActivityAt])
+  @@index([userId, deadline])
 }
 
 model Application {
