@@ -1,9 +1,11 @@
 import {useState, useMemo} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {listJobs, updateJob} from '../api';
-import type {Job, JobStatus} from '../types';
+import {listJobs, updateJob, listApplications, listResumes} from '../api';
+import type {Job, JobStatus, Application, Resume} from '../types';
 import AddJobModal from '../components/AddJobModal';
 import EditJobModal from '../components/EditJobModal';
+import ApplicationModal from '../components/ApplicationModal';
+import ResumeModal from '../components/ResumeModal';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -32,8 +34,22 @@ export default function Dashboard() {
     error,
   } = useQuery({queryKey: ['jobs'], queryFn: listJobs});
 
+  const {data: applications = []} = useQuery({
+    queryKey: ['applications'],
+    queryFn: listApplications,
+  });
+
+  const {data: resumes = []} = useQuery({
+    queryKey: ['resumes'],
+    queryFn: listResumes,
+  });
+
   const [addOpen, setAddOpen] = useState(false);
   const [editJob, setEditJob] = useState<Job | null>(null);
+  const [applicationModalOpen, setApplicationModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [resumeModalOpen, setResumeModalOpen] = useState(false);
+  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
 
   // Group jobs by status for quick render
   const jobsByStatus = useMemo(() => {
@@ -47,6 +63,18 @@ export default function Dashboard() {
     for (const j of jobs) map[j.status].push(j);
     return map;
   }, [jobs]);
+
+  // Check if a job has an application (simplified - we'll enhance this later)
+  const hasApplication = (job: Job) => {
+    // A job has an application if it's been moved beyond SAVED status
+    // This means the user has taken action on it
+    return job.status !== 'SAVED';
+  };
+
+  // Find application for a specific job
+  const getApplicationForJob = (jobId: string): Application | null => {
+    return applications.find((app) => app.jobId === jobId) || null;
+  };
 
   // Move job (optimistic)
   const moveMutation = useMutation({
@@ -62,6 +90,16 @@ export default function Dashboard() {
         );
       }
       return {prev};
+    },
+    onSuccess: (data, vars) => {
+      // If job was moved to APPLIED, automatically open application modal
+      if (vars.status === 'APPLIED') {
+        const job = jobs.find((j) => j.id === vars.id);
+        if (job) {
+          setSelectedJob(job);
+          setApplicationModalOpen(true);
+        }
+      }
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(['jobs'], ctx.prev);
@@ -80,6 +118,12 @@ export default function Dashboard() {
 
   function handleJobUpdated() {
     qc.invalidateQueries({queryKey: ['jobs']});
+  }
+
+  // Track application functionality
+  function handleTrackApplication(job: Job) {
+    setSelectedJob(job);
+    setApplicationModalOpen(true);
   }
 
   // CSV Export functionality
@@ -157,7 +201,7 @@ export default function Dashboard() {
     moveMutation.mutate({id: draggableId, status: destStatus});
   }
 
-  if (isLoading) return <div className="p-4 ">Loading…</div>;
+  if (isLoading) return <div className="p-4 text-white">Loading…</div>;
   if (error) {
     console.error('Jobs error:', error);
     return (
@@ -168,25 +212,31 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-full space-y-4 bg-gray-950 ">
+    <div className="min-h-full space-y-4 bg-gray-950">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold ">Dashboard</h2>
-          <button
-            onClick={() => setAddOpen(true)}
-            className="rounded bg-blue-500 px-3 py-1.5 text-sm "
-          >
-            Add Job
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold text-white">Dashboard</h2>
         <div className="flex gap-2">
-          {/* You can wire Export CSV later */}
+          <button
+            onClick={() => {
+              setSelectedResume(null);
+              setResumeModalOpen(true);
+            }}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Resumes
+          </button>
           <button
             onClick={handleExportCSV}
-            className="rounded border px-3 py-1.5 text-sm"
+            className="rounded border px-3 py-1.5 text-sm text-white"
             disabled={exporting}
           >
             {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white"
+          >
+            Add Job
           </button>
         </div>
       </div>
@@ -225,7 +275,7 @@ export default function Dashboard() {
                     >
                       {status} ({jobsByStatus[status].length})
                     </div>
-                    <div className="p-4 space-y-3 min-h-[400px]">
+                    <div className="p-2 space-y-3 min-h-[400px]">
                       {jobsByStatus[status].length === 0 ? (
                         <div className="text-sm text-gray-400 text-center py-8">
                           No jobs
@@ -254,6 +304,8 @@ export default function Dashboard() {
                                   onMove={(id, status) =>
                                     moveMutation.mutate({id, status})
                                   }
+                                  onTrackApplication={handleTrackApplication}
+                                  hasApplication={hasApplication(j)}
                                 />
                               </div>
                             )}
@@ -280,6 +332,35 @@ export default function Dashboard() {
         job={editJob}
         onClose={handleCloseEdit}
         onUpdated={handleJobUpdated}
+      />
+      <ApplicationModal
+        open={applicationModalOpen && selectedJob !== null}
+        job={selectedJob!}
+        application={selectedJob ? getApplicationForJob(selectedJob.id) : null}
+        resumes={resumes}
+        onClose={() => {
+          setApplicationModalOpen(false);
+          setSelectedJob(null);
+        }}
+        onSaved={() => {
+          qc.invalidateQueries({queryKey: ['jobs']});
+          qc.invalidateQueries({queryKey: ['applications']});
+          setApplicationModalOpen(false);
+          setSelectedJob(null);
+        }}
+      />
+      <ResumeModal
+        open={resumeModalOpen}
+        resume={selectedResume}
+        onClose={() => {
+          setResumeModalOpen(false);
+          setSelectedResume(null);
+        }}
+        onSaved={() => {
+          qc.invalidateQueries({queryKey: ['resumes']});
+          setResumeModalOpen(false);
+          setSelectedResume(null);
+        }}
       />
     </div>
   );

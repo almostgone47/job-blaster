@@ -45,3 +45,12 @@ export interface Application {
   updatedAt: string;
   job: Job;
 }
+
+export interface Resume {
+  id: string;
+  userId: string;
+  name: string;
+  fileUrl: string;
+  createdAt: string;
+  applications?: Application[];
+}

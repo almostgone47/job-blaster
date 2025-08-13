@@ -5,6 +5,7 @@ import {requireAuth} from './auth';
 import jobs from './routes/jobs';
 import parse from './routes/parse';
 import apps from './routes/apps';
+import resumes from './routes/resumes';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(requireAuth);
 app.use(parse);
 app.use(jobs);
 app.use(apps);
+app.use(resumes);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);

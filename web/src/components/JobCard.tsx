@@ -22,10 +22,14 @@ export default function JobCard({
   job,
   onMove,
   onEdit,
+  onTrackApplication,
+  hasApplication,
 }: {
   job: Job;
   onMove: (id: string, status: JobStatus) => void;
   onEdit: (job: Job) => void;
+  onTrackApplication: (job: Job) => void;
+  hasApplication: boolean;
 }) {
   const right = nextStatus(job.status);
   const left = prevStatus(job.status);
@@ -96,15 +100,29 @@ export default function JobCard({
       )}
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
-        <a
-          href={job.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium"
-        >
-          Open Job
-        </a>
+        {!hasApplication && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrackApplication(job);
+            }}
+            className="rounded-md bg-purple-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-purple-700 transition-colors"
+          >
+            Track Application
+          </button>
+        )}
+
+        {hasApplication && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrackApplication(job);
+            }}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-blue-700 transition-colors"
+          >
+            Application Details
+          </button>
+        )}
 
         <div className="ml-auto flex gap-1">
           {left && (
@@ -123,7 +141,14 @@ export default function JobCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onMove(job.id, right);
+                if (right === 'APPLIED') {
+                  // If moving to APPLIED, move the job AND open application modal
+                  onMove(job.id, right);
+                  // The modal will open automatically via the onSuccess callback in Dashboard
+                } else {
+                  // For other statuses, just move the job
+                  onMove(job.id, right);
+                }
               }}
               className="rounded bg-green-600 px-2 py-1 text-xs text-white font-medium hover:bg-green-700 transition-colors"
               title={`Move to ${right}`}
