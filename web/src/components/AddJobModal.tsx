@@ -18,6 +18,11 @@ export default function AddJobModal({
   const [faviconUrl, setFaviconUrl] = useState('');
   const [parseError, setParseError] = useState('');
   const [isLinkedInUrl, setIsLinkedInUrl] = useState(false);
+  const [salary, setSalary] = useState('');
+  const [location, setLocation] = useState('');
+  const [jobType, setJobType] = useState('');
+  const [tags, setTags] = useState('');
+  const [deadline, setDeadline] = useState('');
 
   function normalizeJobUrl(raw: string) {
     try {
@@ -121,7 +126,26 @@ export default function AddJobModal({
     setParseError('');
 
     try {
-      await createJob({title, company, url, source, faviconUrl});
+      // Parse tags from comma-separated string
+      const tagsArray = tags
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter((t) => t)
+        : [];
+
+      await createJob({
+        title,
+        company,
+        url,
+        source,
+        faviconUrl,
+        salary: salary || null,
+        location: location || null,
+        tags: tagsArray,
+        notes: null, // We'll add notes editing later
+      });
+
       onCreated();
       onClose();
       setUrl('');
@@ -129,6 +153,11 @@ export default function AddJobModal({
       setCompany('');
       setSource('');
       setFaviconUrl('');
+      setSalary('');
+      setLocation('');
+      setJobType('');
+      setTags('');
+      setDeadline('');
       setParseError('');
       setIsLinkedInUrl(false);
     } catch (error) {
@@ -243,6 +272,74 @@ export default function AddJobModal({
                 className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Salary Range
+              </label>
+              <input
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
+                placeholder="e.g., $120k-150k, $80k+"
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Location
+              </label>
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g., Remote, NYC, Hybrid"
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Job Type
+              </label>
+              <select
+                value={jobType}
+                onChange={(e) => setJobType(e.target.value)}
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">Select type...</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="contract">Contract</option>
+                <option value="internship">Internship</option>
+                <option value="freelance">Freelance</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Application Deadline
+              </label>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">
+              Tags
+            </label>
+            <input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="e.g., Frontend, Senior, Startup, React (separate with commas)"
+              className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+            />
           </div>
 
           <div className="flex justify-end gap-2">

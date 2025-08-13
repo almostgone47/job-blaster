@@ -25,6 +25,9 @@ export default function EditJobModal({
   const [status, setStatus] = useState<JobStatus>('SAVED');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [salary, setSalary] = useState('');
+  const [location, setLocation] = useState('');
+  const [tags, setTags] = useState('');
 
   // Update form when job changes
   useEffect(() => {
@@ -33,6 +36,9 @@ export default function EditJobModal({
       setCompany(job.company);
       setStatus(job.status);
       setNotes(job.notes || '');
+      setSalary(job.salary || '');
+      setLocation(job.location || '');
+      setTags(job.tags ? job.tags.join(', ') : '');
     }
   }, [job]);
 
@@ -43,11 +49,23 @@ export default function EditJobModal({
     try {
       // Import the updateJob function
       const {updateJob} = await import('../api');
+
+      // Parse tags from comma-separated string
+      const tagsArray = tags
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter((t) => t)
+        : [];
+
       await updateJob(job.id, {
         title,
         company,
         status,
         notes: notes || null,
+        salary: salary || null,
+        location: location || null,
+        tags: tagsArray,
       });
 
       onUpdated();
@@ -126,6 +144,43 @@ export default function EditJobModal({
               rows={3}
               placeholder="Add notes about the role, requirements, your thoughts..."
               className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Salary Range
+              </label>
+              <input
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
+                placeholder="e.g., $120k-150k, $80k+"
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-200">
+                Location
+              </label>
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g., Remote, NYC, Hybrid"
+                className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">
+              Tags
+            </label>
+            <input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="e.g., Frontend, Senior, Startup, React (separate with commas)"
+              className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
             />
           </div>
 

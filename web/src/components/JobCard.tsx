@@ -69,6 +69,32 @@ export default function JobCard({
         </div>
       )}
 
+      {/* Display metadata if available */}
+      {(job.salary || job.location || job.tags.length > 0) && (
+        <div className="mt-3 space-y-2">
+          {job.salary && (
+            <div className="text-xs text-green-400 font-medium">
+              💰 {job.salary}
+            </div>
+          )}
+          {job.location && (
+            <div className="text-xs text-blue-400">📍 {job.location}</div>
+          )}
+          {job.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {job.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded-full border border-gray-600"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center gap-2 flex-wrap">
         <a
           href={job.url}
