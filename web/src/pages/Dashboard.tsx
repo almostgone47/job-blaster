@@ -75,6 +75,70 @@ export default function Dashboard() {
     onSuccess: () => qc.invalidateQueries({queryKey: ['jobs']}),
   });
 
+  // CSV Export functionality
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportCSV() {
+    if (jobs.length === 0) return;
+
+    setExporting(true);
+    try {
+      // Create CSV content
+      const headers = [
+        'Title',
+        'Company',
+        'Status',
+        'URL',
+        'Source',
+        'Location',
+        'Salary',
+        'Tags',
+        'Notes',
+        'Created Date',
+        'Last Activity',
+      ];
+
+      const csvContent = [
+        headers.join(','),
+        ...jobs.map((job) =>
+          [
+            `"${job.title.replace(/"/g, '""')}"`,
+            `"${job.company.replace(/"/g, '""')}"`,
+            job.status,
+            `"${job.url}"`,
+            `"${job.source || ''}"`,
+            `"${job.location || ''}"`,
+            `"${job.salary || ''}"`,
+            `"${job.tags.join('; ') || ''}"`,
+            `"${job.notes || ''}"`,
+            new Date(job.createdAt).toLocaleDateString(),
+            new Date(job.lastActivityAt).toLocaleDateString(),
+          ].join(','),
+        ),
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `job-applications-${new Date().toISOString().split('T')[0]}.csv`,
+      );
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      // You could add a toast notification here
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function onMarkApplied(jobId: string) {
     setApplyForJobId(jobId);
   }
@@ -108,17 +172,23 @@ export default function Dashboard() {
   return (
     <div className="min-h-full space-y-4 bg-gray-950 ">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold ">Dashboard</h2>
-        <div className="flex gap-2">
-          {/* You can wire Export CSV later */}
-          <button className="rounded border px-3 py-1.5 text-sm">
-            Export CSV
-          </button>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold ">Dashboard</h2>
           <button
             onClick={() => setAddOpen(true)}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm "
+            className="rounded bg-blue-500 px-3 py-1.5 text-sm "
           >
             Add Job
+          </button>
+        </div>
+        <div className="flex gap-2">
+          {/* You can wire Export CSV later */}
+          <button
+            onClick={handleExportCSV}
+            className="rounded border px-3 py-1.5 text-sm"
+            disabled={exporting}
+          >
+            {exporting ? 'Exporting...' : 'Export CSV'}
           </button>
         </div>
       </div>
