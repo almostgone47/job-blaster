@@ -63,3 +63,48 @@ export interface Template {
   body: string;
   createdAt: string;
 }
+
+export type InterviewType =
+  | 'PHONE_SCREEN'
+  | 'TECHNICAL'
+  | 'BEHAVIORAL'
+  | 'SYSTEM_DESIGN'
+  | 'CODING_CHALLENGE'
+  | 'ONSITE'
+  | 'FINAL_ROUND'
+  | 'OTHER';
+
+export type InterviewStatus =
+  | 'SCHEDULED'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'RESCHEDULED';
+
+export interface Interview {
+  id: string;
+  userId: string;
+  jobId: string;
+  applicationId?: string | null;
+  title: string;
+  type: InterviewType;
+  scheduledAt: string;
+  duration: number;
+  location?: string | null;
+  participants?: string | null;
+  notes?: string | null;
+  status: InterviewStatus;
+  reminderAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  job: {
+    id: string;
+    title: string;
+    company: string;
+    status: string;
+  };
+  application?: {
+    id: string;
+    status: string;
+  } | null;
+}

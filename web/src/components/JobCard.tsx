@@ -62,6 +62,7 @@ export default function JobCard({
   onMove,
   onEdit,
   onTrackApplication,
+  onScheduleInterview,
   hasApplication,
   isSnoozed = false,
   onUnsnooze,
@@ -70,6 +71,7 @@ export default function JobCard({
   onMove: (id: string, status: JobStatus) => void;
   onEdit: (job: Job) => void;
   onTrackApplication: (job: Job) => void;
+  onScheduleInterview: (job: Job) => void;
   hasApplication: boolean;
   isSnoozed?: boolean;
   onUnsnooze?: () => void;
@@ -220,6 +222,16 @@ export default function JobCard({
             Application Details
           </button>
         )}
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onScheduleInterview(job);
+          }}
+          className="rounded-md bg-orange-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-orange-700 transition-colors"
+        >
+          📅 Schedule Interview
+        </button>
 
         <div className="ml-auto flex gap-1">
           {left && (

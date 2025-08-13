@@ -161,5 +161,59 @@ export async function deleteTemplate(id: string) {
   if (!r.ok) throw new Error('Failed to delete template');
 }
 
+export async function listInterviews(): Promise<Interview[]> {
+  const r = await fetch(`${API}/interviews`, {headers});
+  if (!r.ok) throw new Error('Failed to list interviews');
+  return r.json();
+}
+
+export async function getJobInterviews(jobId: string): Promise<Interview[]> {
+  const r = await fetch(`${API}/interviews/job/${jobId}`, {headers});
+  if (!r.ok) throw new Error('Failed to get job interviews');
+  return r.json();
+}
+
+export async function createInterview(payload: {
+  jobId: string;
+  applicationId?: string;
+  title: string;
+  type: string;
+  scheduledAt: string;
+  duration: number;
+  location?: string;
+  participants?: string;
+  notes?: string;
+  reminderAt?: string;
+}): Promise<Interview> {
+  const r = await fetch(`${API}/interviews`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error('Failed to create interview');
+  return r.json();
+}
+
+export async function updateInterview(
+  id: string,
+  patch: Partial<Interview>,
+): Promise<Interview> {
+  const r = await fetch(`${API}/interviews/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error('Failed to update interview');
+  return r.json();
+}
+
+export async function deleteInterview(id: string) {
+  const r = await fetch(`${API}/interviews/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!r.ok) throw new Error('Failed to delete interview');
+}
+
 // types import
-import type {Job, Application, Resume, Template} from './types';
+import type {Job, Application, Resume, Template, Interview} from './types';

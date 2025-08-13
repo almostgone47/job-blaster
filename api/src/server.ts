@@ -7,6 +7,7 @@ import parse from './routes/parse';
 import apps from './routes/apps';
 import resumes from './routes/resumes';
 import templates from './routes/templates';
+import interviews from './routes/interviews';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(jobs);
 app.use(apps);
 app.use(resumes);
 app.use(templates);
+app.use(interviews);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);

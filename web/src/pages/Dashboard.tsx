@@ -7,6 +7,8 @@ import EditJobModal from '../components/EditJobModal';
 import ApplicationModal from '../components/ApplicationModal';
 import ResumeModal from '../components/ResumeModal';
 import TemplateManager from '../components/TemplateManager';
+import InterviewManager from '../components/InterviewManager';
+import InterviewModal from '../components/InterviewModal';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -59,6 +61,10 @@ export default function Dashboard() {
   );
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false);
+  const [selectedJobForInterview, setSelectedJobForInterview] =
+    useState<Job | null>(null);
+  const [interviewManagerOpen, setInterviewManagerOpen] = useState(false);
   const [deadlineAlertsOpen, setDeadlineAlertsOpen] = usePersistentBoolean(
     'deadlineAlertsOpen',
     false,
@@ -139,6 +145,12 @@ export default function Dashboard() {
   function handleTrackApplication(job: Job) {
     setSelectedJob(job);
     setApplicationModalOpen(true);
+  }
+
+  // Schedule interview functionality
+  function handleScheduleInterview(job: Job) {
+    setSelectedJobForInterview(job);
+    setInterviewModalOpen(true);
   }
 
   // Clear all snoozed deadlines
@@ -305,6 +317,12 @@ export default function Dashboard() {
             Manage Templates
           </button>
           <button
+            onClick={() => setInterviewManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            📅 View Interviews
+          </button>
+          <button
             onClick={handleExportCSV}
             className="rounded border px-3 py-1.5 text-sm text-white"
             disabled={exporting}
@@ -378,6 +396,7 @@ export default function Dashboard() {
                                     moveMutation.mutate({id, status})
                                   }
                                   onTrackApplication={handleTrackApplication}
+                                  onScheduleInterview={handleScheduleInterview}
                                   hasApplication={hasApplication(j)}
                                   isSnoozed={snoozedDeadlines.has(j.id)}
                                   onUnsnooze={() => unsnoozeJob(j.id)}
@@ -455,6 +474,42 @@ export default function Dashboard() {
             <TemplateManager />
           </div>
         </div>
+      )}
+
+      {interviewManagerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-4xl max-h-[90vh] rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Interview Manager
+              </h2>
+              <button
+                onClick={() => setInterviewManagerOpen(false)}
+                className="text-gray-400 hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+            <InterviewManager />
+          </div>
+        </div>
+      )}
+
+      {interviewModalOpen && selectedJobForInterview && (
+        <InterviewModal
+          open={interviewModalOpen}
+          interview={null}
+          job={selectedJobForInterview}
+          onClose={() => {
+            setInterviewModalOpen(false);
+            setSelectedJobForInterview(null);
+          }}
+          onSaved={() => {
+            qc.invalidateQueries({queryKey: ['interviews']});
+            setInterviewModalOpen(false);
+            setSelectedJobForInterview(null);
+          }}
+        />
       )}
 
       {/* Deadline Alerts Modal */}
