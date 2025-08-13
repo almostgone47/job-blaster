@@ -77,9 +77,10 @@ export default function TemplateModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-2xl rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] rounded-xl bg-gray-800 shadow-xl border border-gray-600 flex flex-col">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-600 bg-gray-800 rounded-t-xl">
           <h2 className="text-lg font-semibold text-white">
             {template ? 'Edit Template' : 'Create Template'}
           </h2>
@@ -91,59 +92,61 @@ export default function TemplateModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
-              Template Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g., Software Engineer Cover Letter"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="body"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
-              Template Body
-            </label>
-
-            {/* Placeholder buttons */}
-            <div className="flex flex-wrap gap-2 mb-2">
-              <span className="text-xs text-gray-400 mr-2">
-                Insert placeholders:
-              </span>
-              {['jobTitle', 'company', 'skills', 'location', 'source'].map(
-                (placeholder) => (
-                  <button
-                    key={placeholder}
-                    type="button"
-                    onClick={() => insertPlaceholder(placeholder)}
-                    className="text-xs bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded border border-gray-500 transition-colors"
-                  >
-                    {placeholder}
-                  </button>
-                ),
-              )}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 pt-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Template Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="e.g., Software Engineer Cover Letter"
+                required
+              />
             </div>
 
-            <textarea
-              id="body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={12}
-              className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-sm"
-              placeholder="Dear Hiring Manager,
+            <div>
+              <label
+                htmlFor="body"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Template Body
+              </label>
+
+              {/* Placeholder buttons */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                <span className="text-xs text-gray-400 mr-2">
+                  Insert placeholders:
+                </span>
+                {['jobTitle', 'company', 'skills', 'location', 'source'].map(
+                  (placeholder) => (
+                    <button
+                      key={placeholder}
+                      type="button"
+                      onClick={() => insertPlaceholder(placeholder)}
+                      className="text-xs bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded border border-gray-500 transition-colors"
+                    >
+                      {placeholder}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              <textarea
+                id="body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={12}
+                className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-sm"
+                placeholder="Dear Hiring Manager,
 
 I am writing to express my interest in the {jobTitle} position at {company}...
 
@@ -153,11 +156,44 @@ Thank you for considering my application.
 
 Best regards,
 [Your Name]"
-              required
-            />
-          </div>
+                required
+              />
+            </div>
+          </form>
 
-          <div className="flex items-center justify-between pt-4">
+          {/* Help text */}
+          <div className="mt-4 p-3 bg-gray-700 rounded border border-gray-600">
+            <h4 className="text-sm font-medium text-gray-300 mb-2">
+              Template Placeholders
+            </h4>
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>
+                <code className="bg-gray-600 px-1 rounded">{'{jobTitle}'}</code>{' '}
+                - Job title from the posting
+              </p>
+              <p>
+                <code className="bg-gray-600 px-1 rounded">{'{company}'}</code>{' '}
+                - Company name
+              </p>
+              <p>
+                <code className="bg-gray-600 px-1 rounded">{'{skills}'}</code> -
+                Job skills/tags
+              </p>
+              <p>
+                <code className="bg-gray-600 px-1 rounded">{'{location}'}</code>{' '}
+                - Job location
+              </p>
+              <p>
+                <code className="bg-gray-600 px-1 rounded">{'{source}'}</code> -
+                Where you found the job
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Footer */}
+        <div className="p-6 pt-4 border-t border-gray-600 bg-gray-800 rounded-b-xl">
+          <div className="flex items-center justify-between">
             <div className="flex gap-2">
               {template && (
                 <button
@@ -203,35 +239,6 @@ Best regards,
                 )}
               </button>
             </div>
-          </div>
-        </form>
-
-        {/* Help text */}
-        <div className="mt-4 p-3 bg-gray-700 rounded border border-gray-600">
-          <h4 className="text-sm font-medium text-gray-300 mb-2">
-            Template Placeholders
-          </h4>
-          <div className="text-xs text-gray-400 space-y-1">
-            <p>
-              <code className="bg-gray-600 px-1 rounded">{'{jobTitle}'}</code> -
-              Job title from the posting
-            </p>
-            <p>
-              <code className="bg-gray-600 px-1 rounded">{'{company}'}</code> -
-              Company name
-            </p>
-            <p>
-              <code className="bg-gray-600 px-1 rounded">{'{skills}'}</code> -
-              Job skills/tags
-            </p>
-            <p>
-              <code className="bg-gray-600 px-1 rounded">{'{location}'}</code> -
-              Job location
-            </p>
-            <p>
-              <code className="bg-gray-600 px-1 rounded">{'{source}'}</code> -
-              Where you found the job
-            </p>
           </div>
         </div>
       </div>

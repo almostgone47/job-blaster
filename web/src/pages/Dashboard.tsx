@@ -121,6 +121,15 @@ export default function Dashboard() {
           setApplicationModalOpen(true);
         }
       }
+
+      // If job was moved to INTERVIEW, automatically open interview modal
+      if (vars.status === 'INTERVIEW') {
+        const job = jobs.find((j) => j.id === vars.id);
+        if (job) {
+          setSelectedJobForInterview(job);
+          setInterviewModalOpen(true);
+        }
+      }
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(['jobs'], ctx.prev);
