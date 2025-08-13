@@ -57,7 +57,7 @@ export default function JobCard({
         {job.status === 'SAVED' && (
           <button
             onClick={() => onMarkApplied(job.id)}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-green-700 transition-colors"
+            className="rounded-md bg-green-600 px-3 py-1.5 text-xs  font-medium hover:bg-green-700 transition-colors"
           >
             Mark Applied
           </button>

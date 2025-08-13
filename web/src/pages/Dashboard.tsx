@@ -15,6 +15,14 @@ const COLUMNS: JobStatus[] = [
   'REJECTED',
 ];
 
+const headerColor: Record<JobStatus, string> = {
+  SAVED: 'bg-blue-500 ',
+  APPLIED: 'bg-green-500 ',
+  INTERVIEW: 'bg-yellow-500 text-black',
+  OFFER: 'bg-purple-500 ',
+  REJECTED: 'bg-red-500 ',
+};
+
 export default function Dashboard() {
   const qc = useQueryClient();
   const {
@@ -87,14 +95,20 @@ export default function Dashboard() {
     moveMutation.mutate({id: draggableId, status: destStatus});
   }
 
-  if (isLoading) return <div className="p-4">Loading…</div>;
-  if (error)
-    return <div className="p-4 text-red-600">Failed to load jobs.</div>;
+  if (isLoading) return <div className="p-4 ">Loading…</div>;
+  if (error) {
+    console.error('Jobs error:', error);
+    return (
+      <div className="p-4 text-red-600">
+        Failed to load jobs. Error: {String(error)}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-full space-y-4">
+    <div className="min-h-full space-y-4 bg-gray-950 ">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Dashboard</h2>
+        <h2 className="text-lg font-semibold ">Dashboard</h2>
         <div className="flex gap-2">
           {/* You can wire Export CSV later */}
           <button className="rounded border px-3 py-1.5 text-sm">
@@ -102,7 +116,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setAddOpen(true)}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white"
+            className="rounded bg-gray-900 px-3 py-1.5 text-sm "
           >
             Add Job
           </button>
@@ -110,27 +124,42 @@ export default function Dashboard() {
       </div>
 
       {/* Horizontal Kanban with drag-and-drop */}
-      <div className="w-full overflow-x-auto border-2 border-red-500 bg-yellow-100 p-4">
+      <div className="w-full overflow-x-auto bg-gray-950 pl-2">
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="kanban-container pb-4">
+          <div className="flex flex-row flex-nowrap gap-2 pb-4 items-start">
             {COLUMNS.map((status) => (
               <Droppable droppableId={status} key={status}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`kanban-column rounded-xl border-2 border-blue-500 bg-gray-50 shadow-sm transition-colors ${
+                    className={`w-1/5 flex-none rounded-xl border border-gray-600 bg-gray-900 shadow-sm transition-colors ${
                       snapshot.isDraggingOver
-                        ? 'bg-blue-50 border-blue-300'
+                        ? 'bg-blue-900 border-blue-300'
                         : ''
                     }`}
                   >
-                    <div className="border-b border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 rounded-t-xl">
+                    <div
+                      className={`border-b border-gray-600 px-4 py-3 text-sm font-semibold rounded-t-xl ${headerColor[status]}`}
+                      style={{
+                        backgroundColor:
+                          status === 'SAVED'
+                            ? '#3b82f6'
+                            : status === 'APPLIED'
+                            ? '#10b981'
+                            : status === 'INTERVIEW'
+                            ? '#f59e0b'
+                            : status === 'OFFER'
+                            ? '#8b5cf6'
+                            : '#ef4444',
+                        color: 'white',
+                      }}
+                    >
                       {status} ({jobsByStatus[status].length})
                     </div>
                     <div className="p-4 space-y-3 min-h-[400px]">
                       {jobsByStatus[status].length === 0 ? (
-                        <div className="text-sm text-gray-500 text-center py-8">
+                        <div className="text-sm text-gray-400 text-center py-8">
                           No jobs
                         </div>
                       ) : (
@@ -145,7 +174,7 @@ export default function Dashboard() {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`rounded-lg border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-all ${
+                                className={`rounded-lg border border-gray-600 bg-gray-800 p-4 shadow-md hover:shadow-lg transition-all ${
                                   dragSnapshot.isDragging
                                     ? 'opacity-75 rotate-2 shadow-xl'
                                     : ''
@@ -161,10 +190,10 @@ export default function Dashboard() {
                                     <div className="h-6 w-6 rounded-sm bg-gray-200 flex-shrink-0" />
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <div className="truncate font-medium text-gray-900">
+                                    <div className="truncate font-medium ">
                                       {j.title}
                                     </div>
-                                    <div className="truncate text-sm text-gray-600">
+                                    <div className="truncate text-sm text-gray-300">
                                       {j.company}
                                     </div>
                                   </div>
@@ -175,14 +204,14 @@ export default function Dashboard() {
                                     href={j.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                    className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium"
                                   >
                                     Open Job
                                   </a>
                                   {j.status === 'SAVED' && (
                                     <button
                                       onClick={() => onMarkApplied(j.id)}
-                                      className="ml-auto rounded-md bg-green-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-green-700 transition-colors"
+                                      className="ml-auto rounded-md bg-green-600 px-3 py-1.5 text-xs  font-medium hover:bg-green-700 transition-colors"
                                     >
                                       Mark Applied
                                     </button>

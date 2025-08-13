@@ -43,7 +43,7 @@ export default function DraggableKanban({
             key={status}
             className="flex-shrink-0 w-80 rounded-xl border border-gray-200 bg-gray-100 shadow-sm"
           >
-            <div className="border-b border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 rounded-t-xl">
+            <div className="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 rounded-t-xl">
               {status} ({jobsByStatus[status].length})
             </div>
             <Droppable droppableId={status}>
