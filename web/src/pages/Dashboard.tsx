@@ -6,6 +6,7 @@ import AddJobModal from '../components/AddJobModal';
 import EditJobModal from '../components/EditJobModal';
 import ApplicationModal from '../components/ApplicationModal';
 import ResumeModal from '../components/ResumeModal';
+import TemplateManager from '../components/TemplateManager';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -57,6 +58,7 @@ export default function Dashboard() {
     false,
   );
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
+  const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
   const [deadlineAlertsOpen, setDeadlineAlertsOpen] = usePersistentBoolean(
     'deadlineAlertsOpen',
     false,
@@ -104,7 +106,7 @@ export default function Dashboard() {
       }
       return {prev};
     },
-    onSuccess: (data, vars) => {
+    onSuccess: (_data, vars) => {
       // If job was moved to APPLIED, automatically open application modal
       if (vars.status === 'APPLIED') {
         const job = jobs.find((j) => j.id === vars.id);
@@ -297,6 +299,12 @@ export default function Dashboard() {
             Manage Resumes
           </button>
           <button
+            onClick={() => setTemplateManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Templates
+          </button>
+          <button
             onClick={handleExportCSV}
             className="rounded border px-3 py-1.5 text-sm text-white"
             disabled={exporting}
@@ -429,6 +437,25 @@ export default function Dashboard() {
           setSelectedResume(null);
         }}
       />
+
+      {templateManagerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-4xl max-h-[90vh] rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Template Manager
+              </h2>
+              <button
+                onClick={() => setTemplateManagerOpen(false)}
+                className="text-gray-400 hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+            <TemplateManager />
+          </div>
+        </div>
+      )}
 
       {/* Deadline Alerts Modal */}
       {(() => {

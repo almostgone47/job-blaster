@@ -1,5 +1,8 @@
 import {useState, useEffect} from 'react';
+import {useQuery} from '@tanstack/react-query';
 import type {Job, Application, AppStatus, Resume} from '../types';
+import {listTemplates} from '../api';
+import {processTemplate} from '../utils/templateProcessor';
 
 const APP_STATUS_OPTIONS: AppStatus[] = [
   'DRAFT',
@@ -32,6 +35,13 @@ export default function ApplicationModal({
   const [nextActionDate, setNextActionDate] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+
+  // Fetch templates
+  const {data: templates = []} = useQuery({
+    queryKey: ['templates'],
+    queryFn: listTemplates,
+  });
 
   // Update form when application changes
   useEffect(() => {
@@ -59,7 +69,20 @@ export default function ApplicationModal({
       setNextActionDate('');
       setNotes('');
     }
+    setSelectedTemplateId('');
   }, [application]);
+
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (templateId) {
+      const template = templates.find((t) => t.id === templateId);
+      if (template) {
+        const processedCoverNote = processTemplate(template.body, job);
+        setCoverNote(processedCoverNote);
+      }
+    }
+  };
 
   async function handleSave() {
     if (!job) return;
@@ -214,6 +237,25 @@ export default function ApplicationModal({
             <label className="block text-sm font-medium text-gray-200">
               Cover Note
             </label>
+
+            {/* Template selector */}
+            {templates.length > 0 && (
+              <div className="mb-2">
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Use a template...</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <textarea
               value={coverNote}
               onChange={(e) => setCoverNote(e.target.value)}

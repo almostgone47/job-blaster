@@ -78,16 +78,16 @@ export default function JobCard({
   const left = prevStatus(job.status);
 
   // Check if job has urgent deadline for border styling
-  const hasUrgentDeadline =
-    job.deadline &&
-    (() => {
-      const deadline = new Date(job.deadline);
-      const now = new Date();
-      const diffDays = Math.ceil(
-        (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-      );
-      return diffDays <= 3; // Overdue, today, tomorrow, or this week
-    })();
+  // const hasUrgentDeadline =
+  //   job.deadline &&
+  //   (() => {
+  //     const deadline = new Date(job.deadline);
+  //     const now = new Date();
+  //     const diffDays = Math.ceil(
+  //       (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+  //     );
+  //     return diffDays <= 3; // Overdue, today, tomorrow, or this week
+  //   })();
 
   const getBorderStyle = () => {
     if (!job.deadline) return 'border-gray-600';

@@ -127,5 +127,39 @@ export async function exportJobsCSV(): Promise<Blob> {
   return r.blob();
 }
 
+export async function listTemplates(): Promise<Template[]> {
+  const r = await fetch(`${API}/templates`, {headers});
+  if (!r.ok) throw new Error('Failed to list templates');
+  return r.json();
+}
+
+export async function createTemplate(payload: {name: string; body: string}) {
+  const r = await fetch(`${API}/templates`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw Error('Failed to create template');
+  return r.json();
+}
+
+export async function updateTemplate(id: string, patch: Partial<Template>) {
+  const r = await fetch(`${API}/templates/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error('Failed to update template');
+  return r.json();
+}
+
+export async function deleteTemplate(id: string) {
+  const r = await fetch(`${API}/templates/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!r.ok) throw new Error('Failed to delete template');
+}
+
 // types import
-import type {Job, Application, Resume} from './types';
+import type {Job, Application, Resume, Template} from './types';
