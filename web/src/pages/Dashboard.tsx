@@ -554,7 +554,7 @@ export default function Dashboard() {
                             className="text-xs text-gray-400 hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-700 transition-colors"
                             title="Snooze this alert"
                           >
-                            ⏰
+                            Snooze ⏰
                           </button>
                         </div>
                       </div>
