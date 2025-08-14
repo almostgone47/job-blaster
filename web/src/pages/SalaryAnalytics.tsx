@@ -2,10 +2,18 @@ import {useConsolidatedSalaryData} from '../lib/salaryAnalytics';
 import TimelineChart from '../components/analytics/TimelineChart';
 import RemoteSplit from '../components/analytics/RemoteSplit';
 import Recommendations from '../components/analytics/Recommendations';
+import {ErrorBoundary} from '../components/ErrorBoundary';
+
+import {CollectMoreData} from '../components/analytics/CollectMoreData';
+import {useFormatting} from '../contexts/UserPreferences';
+import {useState} from 'react';
+import {PreferencesSettings} from '../components/PreferencesSettings';
 
 export default function SalaryAnalytics() {
   // Use consolidated hook for better performance - only ONE API call!
   const {data, isLoading, error: hasError} = useConsolidatedSalaryData();
+  const {formatCurrency} = useFormatting();
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
 
   // Extract data from consolidated response
   const stats = data?.stats;
@@ -84,25 +92,28 @@ export default function SalaryAnalytics() {
   }
 
   const hasLowSignal = offers?.length < 5;
+  const hasInsufficientData = offers?.length < 3;
 
-  const formatSalary = (amount: number, currency: string = 'USD') => {
-    // Format with "k" abbreviation for better readability
-    if (amount >= 1000) {
-      return `$${Math.round(amount / 1000)}k`;
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  // Use the formatCurrency function from user preferences
+  const formatSalary = (amount: number, currency?: string) => {
+    return formatCurrency(amount, currency);
   };
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="text-center">
+        <div className="text-center relative">
+          <div className="absolute top-0 right-0">
+            <button
+              onClick={() => setPreferencesOpen(true)}
+              className="bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              title="Display Preferences"
+            >
+              ⚙️ Display Settings
+            </button>
+          </div>
+
           <h1 className="text-4xl font-bold text-white mb-4">
             Salary Analytics
           </h1>
@@ -110,7 +121,7 @@ export default function SalaryAnalytics() {
             Turn your job data into negotiation power.
           </p>
 
-          {hasLowSignal && (
+          {hasLowSignal && !hasInsufficientData && (
             <div className="mt-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4 max-w-2xl mx-auto">
               <div className="flex items-center justify-center space-x-2">
                 <span className="text-yellow-400">⚠️</span>
@@ -122,7 +133,12 @@ export default function SalaryAnalytics() {
           )}
         </div>
 
-        {/* Headline Stats Card */}
+        {/* Show Collect More Data when insufficient data */}
+        {hasInsufficientData && (
+          <CollectMoreData offerCount={offers?.length || 0} />
+        )}
+
+        {/* Headline Stats Card - Always show */}
         <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-white mb-6">
             Your Salary Position
@@ -172,53 +188,55 @@ export default function SalaryAnalytics() {
           </div>
         </div>
 
-        {/* Range & Distribution Card */}
-        <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            Salary Range & Distribution
-          </h2>
+        {/* Range & Distribution Card - Show if sufficient data */}
+        {!hasInsufficientData && (
+          <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Salary Range & Distribution
+            </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-red-400 mb-2">
-                {formatSalary(stats.minSalary)}
-              </p>
-              <p className="text-gray-400">Minimum</p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-400 mb-2">
+                  {formatSalary(stats.minSalary)}
+                </p>
+                <p className="text-gray-400">Minimum</p>
+              </div>
+
+              <div className="text-center">
+                <p className="text-2xl font-bold text-yellow-400 mb-2">
+                  {formatSalary(stats.p25)}
+                </p>
+                <p className="text-gray-400">25th Percentile</p>
+              </div>
+
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-400 mb-2">
+                  {formatSalary(stats.p75)}
+                </p>
+                <p className="text-gray-400">75th Percentile</p>
+              </div>
+
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-400 mb-2">
+                  {formatSalary(stats.maxSalary)}
+                </p>
+                <p className="text-gray-400">Maximum</p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-400 mb-2">
-                {formatSalary(stats.p25)}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <p className="text-gray-300 text-center">
+                Most offers fall between {formatSalary(stats.p25)}–
+                {formatSalary(stats.p75)}. Use this band as your realistic
+                expectation zone.
               </p>
-              <p className="text-gray-400">25th Percentile</p>
-            </div>
-
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-400 mb-2">
-                {formatSalary(stats.p75)}
-              </p>
-              <p className="text-gray-400">75th Percentile</p>
-            </div>
-
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-400 mb-2">
-                {formatSalary(stats.maxSalary)}
-              </p>
-              <p className="text-gray-400">Maximum</p>
             </div>
           </div>
+        )}
 
-          <div className="bg-gray-700 rounded-lg p-4">
-            <p className="text-gray-300 text-center">
-              Most offers fall between {formatSalary(stats.p25)}–
-              {formatSalary(stats.p75)}. Use this band as your realistic
-              expectation zone.
-            </p>
-          </div>
-        </div>
-
-        {/* Company Leaderboard */}
-        {companies && companies.length > 0 && (
+        {/* Company Leaderboard - Show if sufficient data */}
+        {!hasInsufficientData && companies && companies.length > 0 && (
           <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
               Company Leaderboard
@@ -276,8 +294,8 @@ export default function SalaryAnalytics() {
           </div>
         )}
 
-        {/* Location Breakdown */}
-        {locations && locations.length > 0 && (
+        {/* Location Breakdown - Show if sufficient data */}
+        {!hasInsufficientData && locations && locations.length > 0 && (
           <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
               Salary by Location
@@ -317,8 +335,8 @@ export default function SalaryAnalytics() {
           </div>
         )}
 
-        {/* Recent Offers */}
-        {offers && offers.length > 0 && (
+        {/* Recent Offers - Show if sufficient data */}
+        {!hasInsufficientData && offers && offers.length > 0 && (
           <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
               Recent Offers
@@ -363,26 +381,37 @@ export default function SalaryAnalytics() {
           </div>
         )}
 
-        {/* Timeline Chart */}
-        {timelineData && timelineData.length > 0 && (
-          <TimelineChart data={timelineData} />
+        {/* Timeline Chart - Show if sufficient data */}
+        {!hasInsufficientData && timelineData && timelineData.length > 0 && (
+          <ErrorBoundary>
+            <TimelineChart data={timelineData} />
+          </ErrorBoundary>
         )}
 
-        {/* Remote vs Onsite Comparison */}
-        {remoteSplitData &&
+        {/* Remote vs Onsite Comparison - Show if sufficient data */}
+        {!hasInsufficientData &&
+          remoteSplitData &&
           (remoteSplitData.remote.count > 0 ||
             remoteSplitData.onsite.count > 0) && (
-            <RemoteSplit data={remoteSplitData} />
+            <ErrorBoundary>
+              <RemoteSplit data={remoteSplitData} />
+            </ErrorBoundary>
           )}
 
-        {/* Smart Recommendations */}
-        {companies && companies.length > 0 && stats && offers && (
-          <Recommendations
-            companies={companies}
-            stats={stats}
-            offers={offers}
-          />
-        )}
+        {/* Smart Recommendations - Show if sufficient data */}
+        {!hasInsufficientData &&
+          companies &&
+          companies.length > 0 &&
+          stats &&
+          offers && (
+            <ErrorBoundary>
+              <Recommendations
+                companies={companies}
+                stats={stats}
+                offers={offers}
+              />
+            </ErrorBoundary>
+          )}
 
         {/* Export Section */}
         <div className="bg-gray-800 border border-gray-600 rounded-xl p-8 text-center">
@@ -403,6 +432,12 @@ export default function SalaryAnalytics() {
           </div>
         </div>
       </div>
+
+      {/* Preferences Settings Modal */}
+      <PreferencesSettings
+        isOpen={preferencesOpen}
+        onClose={() => setPreferencesOpen(false)}
+      />
     </div>
   );
 }
