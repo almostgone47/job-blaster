@@ -8,12 +8,19 @@ import {CollectMoreData} from '../components/analytics/CollectMoreData';
 import {useFormatting} from '../contexts/UserPreferences';
 import {useState} from 'react';
 import {PreferencesSettings} from '../components/PreferencesSettings';
+import {
+  generateMarkdown,
+  generateCSV,
+  downloadFile,
+} from '../utils/exportUtils';
 
 export default function SalaryAnalytics() {
   // Use consolidated hook for better performance - only ONE API call!
   const {data, isLoading, error: hasError} = useConsolidatedSalaryData();
   const {formatCurrency} = useFormatting();
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [exportingMarkdown, setExportingMarkdown] = useState(false);
+  const [exportingCSV, setExportingCSV] = useState(false);
 
   // Extract data from consolidated response
   const stats = data?.stats;
@@ -97,6 +104,41 @@ export default function SalaryAnalytics() {
   // Use the formatCurrency function from user preferences
   const formatSalary = (amount: number, currency?: string) => {
     return formatCurrency(amount, currency);
+  };
+
+  // Export functions
+  const handleExportMarkdown = async () => {
+    if (!stats || !companies || !offers) return;
+
+    setExportingMarkdown(true);
+    try {
+      const exportData = {stats, companies, offers};
+      const markdown = generateMarkdown(exportData);
+      const filename = `salary-analytics-${
+        new Date().toISOString().split('T')[0]
+      }.md`;
+
+      downloadFile(markdown, filename, 'text/markdown');
+    } finally {
+      setExportingMarkdown(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (!stats || !companies || !offers) return;
+
+    setExportingCSV(true);
+    try {
+      const exportData = {stats, companies, offers};
+      const csv = generateCSV(exportData);
+      const filename = `salary-analytics-${
+        new Date().toISOString().split('T')[0]
+      }.csv`;
+
+      downloadFile(csv, filename, 'text/csv');
+    } finally {
+      setExportingCSV(false);
+    }
   };
 
   return (
@@ -423,11 +465,33 @@ export default function SalaryAnalytics() {
             planning.
           </p>
           <div className="flex justify-center space-x-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-              📄 Export as Markdown
+            <button
+              onClick={handleExportMarkdown}
+              disabled={!stats || !companies || !offers || exportingMarkdown}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              {exportingMarkdown ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Exporting...
+                </>
+              ) : (
+                '📄 Export as Markdown'
+              )}
             </button>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-              📊 Export as CSV
+            <button
+              onClick={handleExportCSV}
+              disabled={!stats || !companies || !offers || exportingCSV}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              {exportingCSV ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Exporting...
+                </>
+              ) : (
+                '📊 Export as CSV'
+              )}
             </button>
           </div>
         </div>

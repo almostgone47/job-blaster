@@ -20,77 +20,182 @@ router.get('/salary/analytics', async (req, res) => {
 
   try {
     // OPTIMIZED: Get all data in fewer queries with better performance
-    const [jobsWithSalary, offers, salaryHistory] = await Promise.all([
-      // Get jobs with salary data
-      prisma.job.findMany({
-        where: {
-          userId,
-          OR: [
-            {salaryMin: {not: null}},
-            {salaryMax: {not: null}},
-            {salary: {not: null}},
-          ],
-        },
-        select: {
-          id: true,
-          title: true,
-          company: true,
-          location: true,
-          salary: true,
-          salaryMin: true,
-          salaryMax: true,
-          salaryCurrency: true,
-          salaryType: true,
-          status: true,
-          createdAt: true,
-        },
-        orderBy: {createdAt: 'desc'},
-      }),
+    // Add retry logic for connection pool issues
+    const executeWithRetry = async (
+      queryFn: () => Promise<any>,
+      retries = 3,
+    ) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await queryFn();
+        } catch (error: any) {
+          if (error.code === 'P2024' && i < retries - 1) {
+            // Connection pool timeout, wait and retry
+            console.log(
+              `Connection pool timeout, retrying... (attempt ${
+                i + 1
+              }/${retries})`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
 
-      // Get salary offers with minimal job data
-      prisma.salaryOffer.findMany({
-        where: {userId},
-        select: {
-          id: true,
-          amount: true,
-          currency: true,
-          type: true,
-          status: true,
-          offeredAt: true,
-          notes: true,
-          benefits: true,
-          job: {
-            select: {
-              title: true,
-              company: true,
-              location: true,
+    // Execute queries with retry logic for connection pool issues
+    let jobsWithSalary, offers, salaryHistory;
+
+    try {
+      [jobsWithSalary, offers, salaryHistory] = await Promise.all([
+        // Get jobs with salary data
+        prisma.job.findMany({
+          where: {
+            userId,
+            OR: [
+              {salaryMin: {not: null}},
+              {salaryMax: {not: null}},
+              {salary: {not: null}},
+            ],
+          },
+          select: {
+            id: true,
+            title: true,
+            company: true,
+            location: true,
+            salary: true,
+            salaryMin: true,
+            salaryMax: true,
+            salaryCurrency: true,
+            salaryType: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: {createdAt: 'desc'},
+        }),
+
+        // Get salary offers with minimal job data
+        prisma.salaryOffer.findMany({
+          where: {userId},
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            type: true,
+            status: true,
+            offeredAt: true,
+            notes: true,
+            benefits: true,
+            job: {
+              select: {
+                title: true,
+                company: true,
+                location: true,
+              },
             },
           },
-        },
-        orderBy: {offeredAt: 'desc'},
-      }),
+          orderBy: {offeredAt: 'desc'},
+        }),
 
-      // Get salary history with minimal job data
-      prisma.salaryHistory.findMany({
-        where: {userId},
-        select: {
-          id: true,
-          amount: true,
-          currency: true,
-          type: true,
-          effectiveDate: true,
-          changeType: true,
-          notes: true,
-          job: {
-            select: {
-              title: true,
-              company: true,
+        // Get salary history with minimal job data
+        prisma.salaryHistory.findMany({
+          where: {userId},
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            type: true,
+            effectiveDate: true,
+            changeType: true,
+            notes: true,
+            job: {
+              select: {
+                title: true,
+                company: true,
+              },
             },
           },
-        },
-        orderBy: {effectiveDate: 'desc'},
-      }),
-    ]);
+          orderBy: {effectiveDate: 'desc'},
+        }),
+      ]);
+    } catch (error: any) {
+      if (error.code === 'P2024') {
+        // Connection pool timeout, try sequential queries instead
+        console.log(
+          'Connection pool timeout, falling back to sequential queries...',
+        );
+
+        jobsWithSalary = await prisma.job.findMany({
+          where: {
+            userId,
+            OR: [
+              {salaryMin: {not: null}},
+              {salaryMax: {not: null}},
+              {salary: {not: null}},
+            ],
+          },
+          select: {
+            id: true,
+            title: true,
+            company: true,
+            location: true,
+            salary: true,
+            salaryMin: true,
+            salaryMax: true,
+            salaryCurrency: true,
+            salaryType: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: {createdAt: 'desc'},
+        });
+
+        offers = await prisma.salaryOffer.findMany({
+          where: {userId},
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            type: true,
+            status: true,
+            offeredAt: true,
+            notes: true,
+            benefits: true,
+            job: {
+              select: {
+                title: true,
+                company: true,
+                location: true,
+              },
+            },
+          },
+          orderBy: {offeredAt: 'desc'},
+        });
+
+        salaryHistory = await prisma.salaryHistory.findMany({
+          where: {userId},
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            type: true,
+            effectiveDate: true,
+            changeType: true,
+            notes: true,
+            job: {
+              select: {
+                title: true,
+                company: true,
+              },
+            },
+          },
+          orderBy: {effectiveDate: 'desc'},
+        });
+      } else {
+        throw error;
+      }
+    }
 
     // Calculate analytics
     const analytics = {
