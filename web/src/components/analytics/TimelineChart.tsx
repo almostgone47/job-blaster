@@ -143,9 +143,12 @@ export default function TimelineChart({data}: TimelineChartProps) {
         {isGrowing && (
           <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-4">
             <p className="text-green-300">
-              🚀 <strong>Good moment to negotiate aggressively!</strong> Your
-              offers are trending up by {recentGrowth?.toFixed(1)}% over the
-              last month.
+              🚀{' '}
+              <strong>
+                Offers are trending up—good time to negotiate aggressively!
+              </strong>{' '}
+              Your offers are trending up by {recentGrowth?.toFixed(1)}% over
+              the last month.
             </p>
           </div>
         )}
@@ -153,8 +156,11 @@ export default function TimelineChart({data}: TimelineChartProps) {
         {isDeclining && (
           <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
             <p className="text-yellow-300">
-              ⚠️ <strong>Market may be cooling.</strong> Consider broadening
-              your search or adjusting expectations.
+              ⚠️{' '}
+              <strong>
+                Offers are trending down—consider broadening your search.
+              </strong>{' '}
+              Consider broadening your search or adjusting expectations.
             </p>
           </div>
         )}

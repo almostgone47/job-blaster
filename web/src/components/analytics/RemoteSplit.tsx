@@ -70,7 +70,7 @@ export default function RemoteSplit({data}: RemoteSplitProps) {
     } else if (remoteHigher) {
       return `Remote roles pay ${percentageDiff.toFixed(
         1,
-      )}% more on average. Prioritize remote opportunities for better compensation.`;
+      )}% more on average. Prioritize remote if optimizing for compensation.`;
     } else {
       return `Onsite roles pay ${percentageDiff.toFixed(
         1,
