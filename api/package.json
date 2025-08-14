@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev -n init"
+    "prisma:migrate": "prisma migrate dev -n init",
+    "migrate-salary": "ts-node src/migrate-salary-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",

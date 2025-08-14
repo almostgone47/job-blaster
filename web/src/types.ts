@@ -108,3 +108,77 @@ export interface Interview {
     status: string;
   } | null;
 }
+
+export const SalaryType = {
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  ANNUAL: 'ANNUAL',
+  PROJECT_BASED: 'PROJECT_BASED',
+} as const;
+
+export type SalaryType = (typeof SalaryType)[keyof typeof SalaryType];
+
+export const OfferStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  NEGOTIATING: 'NEGOTIATING',
+  EXPIRED: 'EXPIRED',
+} as const;
+
+export type OfferStatus = (typeof OfferStatus)[keyof typeof OfferStatus];
+
+export interface SalaryOffer {
+  id: string;
+  userId: string;
+  jobId: string;
+  applicationId?: string;
+  amount: number; // in cents
+  currency: string;
+  type: SalaryType;
+  status: OfferStatus;
+  offeredAt: string;
+  expiresAt?: string;
+  notes?: string;
+  benefits: string[];
+  createdAt: string;
+  updatedAt: string;
+  job: {
+    title: string;
+    company: string;
+    location?: string;
+  };
+}
+
+export interface SalaryHistory {
+  id: string;
+  userId: string;
+  jobId: string;
+  amount: number; // in cents
+  currency: string;
+  type: SalaryType;
+  effectiveDate: string;
+  changeType: string;
+  notes?: string;
+  createdAt: string;
+  job: {
+    title: string;
+    company: string;
+  };
+}
+
+export interface SalaryAnalytics {
+  totalJobsWithSalary: number;
+  totalOffers: number;
+  pendingOffers: number;
+  acceptedOffers: number;
+  averageSalary: number;
+  salaryRange: {
+    min: number;
+    max: number;
+  };
+  byLocation: Record<string, {count: number; avgSalary: number}>;
+  byCompany: Record<string, {count: number; avgSalary: number}>;
+}

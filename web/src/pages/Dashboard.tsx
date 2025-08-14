@@ -11,6 +11,7 @@ import InterviewManager from '../components/InterviewManager';
 import InterviewModal from '../components/InterviewModal';
 import InterviewNotifications from '../components/InterviewNotifications';
 import InterviewBanner from '../components/InterviewBanner';
+import SalaryAnalytics from '../components/SalaryAnalytics';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -67,6 +68,7 @@ export default function Dashboard() {
   const [selectedJobForInterview, setSelectedJobForInterview] =
     useState<Job | null>(null);
   const [interviewManagerOpen, setInterviewManagerOpen] = useState(false);
+  const [salaryAnalyticsOpen, setSalaryAnalyticsOpen] = useState(false);
   const [deadlineAlertsOpen, setDeadlineAlertsOpen] = usePersistentBoolean(
     'deadlineAlertsOpen',
     false,
@@ -353,6 +355,12 @@ export default function Dashboard() {
             📅 View Interviews
           </button>
           <button
+            onClick={() => setSalaryAnalyticsOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            💰 Salary Analytics
+          </button>
+          <button
             onClick={handleExportCSV}
             className="rounded border px-3 py-1.5 text-sm text-white"
             disabled={exporting}
@@ -521,6 +529,25 @@ export default function Dashboard() {
               </button>
             </div>
             <InterviewManager />
+          </div>
+        </div>
+      )}
+
+      {salaryAnalyticsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-6xl max-h-[90vh] rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                💰 Salary Analytics
+              </h2>
+              <button
+                onClick={() => setSalaryAnalyticsOpen(false)}
+                className="text-gray-400 hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+            <SalaryAnalytics />
           </div>
         </div>
       )}

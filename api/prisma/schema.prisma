@@ -34,6 +34,8 @@ model User {
   applications Application[]
   templates    Template[]
   interviews   Interview[]
+  salaryOffers SalaryOffer[]
+  salaryHistory SalaryHistory[]
 }
 
 model Resume {
@@ -54,7 +56,11 @@ model Job {
   url            String
   source         String?
   location       String?
-  salary         String?
+  salary         String? // Keep for backward compatibility
+  salaryMin      Int?     // Minimum salary in cents
+  salaryMax      Int?     // Maximum salary in cents
+  salaryCurrency String   @default("USD")
+  salaryType     SalaryType @default(ANNUAL)
   tags           String[]
   status         JobStatus     @default(SAVED)
   faviconUrl     String?
@@ -66,10 +72,14 @@ model Job {
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications   Application[]
   interviews     Interview[]
+  salaryOffers   SalaryOffer[]
+  salaryHistory  SalaryHistory[]
 
   @@index([userId, status, createdAt])
   @@index([userId, lastActivityAt])
   @@index([userId, deadline])
+  @@index([userId, salaryMin])
+  @@index([userId, salaryMax])
 }
 
 model Application {
@@ -88,6 +98,7 @@ model Application {
   job        Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   resume     Resume?   @relation(fields: [resumeId], references: [id])
   interviews Interview[]
+  salaryOffers SalaryOffer[]
 
   @@index([userId, nextAction])
   @@index([userId, status])
@@ -145,4 +156,65 @@ enum InterviewStatus {
   COMPLETED
   CANCELLED
   RESCHEDULED
+}
+
+enum SalaryType {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  ANNUAL
+  PROJECT_BASED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  NEGOTIATING
+  EXPIRED
+}
+
+model SalaryOffer {
+  id           String      @id @default(cuid())
+  userId       String
+  jobId        String
+  applicationId String?
+  amount       Int         // Salary amount in cents
+  currency     String      @default("USD")
+  type         SalaryType  @default(ANNUAL)
+  status       OfferStatus @default(PENDING)
+  offeredAt    DateTime    @default(now())
+  expiresAt    DateTime?
+  notes        String?
+  benefits     String[]    // Array of benefit descriptions
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job          Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  application  Application? @relation(fields: [applicationId], references: [id])
+
+  @@index([userId, status])
+  @@index([userId, offeredAt])
+  @@index([jobId])
+}
+
+model SalaryHistory {
+  id           String      @id @default(cuid())
+  userId       String
+  jobId        String
+  amount       Int         // Salary amount in cents
+  currency     String      @default("USD")
+  type         SalaryType  @default(ANNUAL)
+  effectiveDate DateTime   @default(now())
+  changeType   String      // "INITIAL", "RAISE", "BONUS", "ADJUSTMENT"
+  notes        String?
+  createdAt    DateTime    @default(now())
+  
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job          Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([userId, effectiveDate])
+  @@index([jobId])
 }

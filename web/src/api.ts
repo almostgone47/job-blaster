@@ -215,5 +215,88 @@ export async function deleteInterview(id: string) {
   if (!r.ok) throw new Error('Failed to delete interview');
 }
 
+// Salary Analytics API functions
+export async function getSalaryAnalytics(): Promise<{
+  analytics: SalaryAnalytics;
+  jobs: Array<{
+    id: string;
+    title: string;
+    company: string;
+    location?: string;
+    salaryMin?: number;
+    salaryMax?: number;
+    salaryCurrency: string;
+    salaryType: string;
+    status: string;
+    createdAt: string;
+  }>;
+  offers: SalaryOffer[];
+  salaryHistory: SalaryHistory[];
+}> {
+  const r = await fetch(`${API}/salary/analytics`, {headers});
+  if (!r.ok) throw new Error('Failed to fetch salary analytics');
+  return r.json();
+}
+
+export async function createSalaryOffer(payload: {
+  jobId: string;
+  applicationId?: string;
+  amount: number;
+  currency?: string;
+  type?: string;
+  status?: string;
+  expiresAt?: string;
+  notes?: string;
+  benefits?: string[];
+}): Promise<SalaryOffer> {
+  const r = await fetch(`${API}/salary/offers`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error('Failed to create salary offer');
+  return r.json();
+}
+
+export async function updateSalaryOffer(
+  id: string,
+  patch: Partial<SalaryOffer>,
+): Promise<SalaryOffer> {
+  const r = await fetch(`${API}/salary/offers/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error('Failed to update salary offer');
+  return r.json();
+}
+
+export async function createSalaryHistory(payload: {
+  jobId: string;
+  amount: number;
+  currency?: string;
+  type?: string;
+  effectiveDate?: string;
+  changeType?: string;
+  notes?: string;
+}): Promise<SalaryHistory> {
+  const r = await fetch(`${API}/salary/history`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error('Failed to create salary history');
+  return r.json();
+}
+
 // types import
-import type {Job, Application, Resume, Template, Interview} from './types';
+import type {
+  Job,
+  Application,
+  Resume,
+  Template,
+  Interview,
+  SalaryOffer,
+  SalaryHistory,
+  SalaryAnalytics,
+} from './types';
