@@ -8,7 +8,7 @@ router.get('/salary/analytics', async (req, res) => {
   const userId = (req as any).userId as string;
 
   try {
-    // Get all jobs with salary data
+    // Get all jobs with salary data (including old salary field)
     const jobsWithSalary = await prisma.job.findMany({
       where: {
         userId,
@@ -23,6 +23,7 @@ router.get('/salary/analytics', async (req, res) => {
         title: true,
         company: true,
         location: true,
+        salary: true, // Keep the old salary field
         salaryMin: true,
         salaryMax: true,
         salaryCurrency: true,
@@ -68,30 +69,10 @@ router.get('/salary/analytics', async (req, res) => {
       totalOffers: offers.length,
       pendingOffers: offers.filter((o) => o.status === 'PENDING').length,
       acceptedOffers: offers.filter((o) => o.status === 'ACCEPTED').length,
-      averageSalary:
-        jobsWithSalary.length > 0
-          ? jobsWithSalary.reduce((sum, job) => {
-              const avg = ((job.salaryMin || 0) + (job.salaryMax || 0)) / 2;
-              return sum + avg;
-            }, 0) / jobsWithSalary.length
-          : 0,
+      averageSalary: 0, // Will calculate after we have all data
       salaryRange: {
-        min:
-          jobsWithSalary.length > 0
-            ? Math.min(
-                ...jobsWithSalary
-                  .map((j) => j.salaryMin || 0)
-                  .filter((v) => v > 0),
-              )
-            : 0,
-        max:
-          jobsWithSalary.length > 0
-            ? Math.max(
-                ...jobsWithSalary
-                  .map((j) => j.salaryMax || 0)
-                  .filter((v) => v > 0),
-              )
-            : 0,
+        min: 0,
+        max: 0,
       },
       byLocation: {} as Record<string, {count: number; avgSalary: number}>,
       byCompany: {} as Record<string, {count: number; avgSalary: number}>,
@@ -104,7 +85,17 @@ router.get('/salary/analytics', async (req, res) => {
           analytics.byLocation[job.location] = {count: 0, avgSalary: 0};
         }
         analytics.byLocation[job.location].count++;
-        const avg = ((job.salaryMin || 0) + (job.salaryMax || 0)) / 2;
+
+        // Calculate average salary using new or old format
+        let avg = 0;
+        if (job.salaryMin && job.salaryMax) {
+          avg = (job.salaryMin + job.salaryMax) / 2;
+        } else if (job.salary) {
+          const salaryMatch = job.salary.match(/\$?(\d+)k?/i);
+          if (salaryMatch) {
+            avg = parseInt(salaryMatch[1]) * 1000;
+          }
+        }
         analytics.byLocation[job.location].avgSalary += avg;
       }
     });
@@ -115,7 +106,17 @@ router.get('/salary/analytics', async (req, res) => {
         analytics.byCompany[job.company] = {count: 0, avgSalary: 0};
       }
       analytics.byCompany[job.company].count++;
-      const avg = ((job.salaryMin || 0) + (job.salaryMax || 0)) / 2;
+
+      // Calculate average salary using new or old format
+      let avg = 0;
+      if (job.salaryMin && job.salaryMax) {
+        avg = (job.salaryMin + job.salaryMax) / 2;
+      } else if (job.salary) {
+        const salaryMatch = job.salary.match(/\$?(\d+)k?/i);
+        if (salaryMatch) {
+          avg = parseInt(salaryMatch[1]) * 1000;
+        }
+      }
       analytics.byCompany[job.company].avgSalary += avg;
     });
 
@@ -129,6 +130,35 @@ router.get('/salary/analytics', async (req, res) => {
       analytics.byCompany[company].avgSalary /=
         analytics.byCompany[company].count;
     });
+
+    // Calculate salary range from ALL sources (jobs + offers)
+    const allSalaries: number[] = [];
+
+    // Add job salaries
+    jobsWithSalary.forEach((job) => {
+      if (job.salaryMin && job.salaryMax) {
+        allSalaries.push(job.salaryMin, job.salaryMax);
+      } else if (job.salary) {
+        const salaryMatch = job.salary.match(/\$?(\d+)k?/i);
+        if (salaryMatch) {
+          allSalaries.push(parseInt(salaryMatch[1]) * 1000);
+        }
+      }
+    });
+
+    // Add offer salaries (amount is already in dollars)
+    offers.forEach((offer) => {
+      allSalaries.push(offer.amount);
+    });
+
+    // Calculate min/max and average from all salaries
+    if (allSalaries.length > 0) {
+      analytics.salaryRange.min = Math.min(...allSalaries);
+      analytics.salaryRange.max = Math.max(...allSalaries);
+      analytics.averageSalary =
+        allSalaries.reduce((sum, salary) => sum + salary, 0) /
+        allSalaries.length;
+    }
 
     res.json({
       analytics,

@@ -8,7 +8,10 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev -n init",
-    "migrate-salary": "ts-node src/migrate-salary-data.ts"
+    "migrate-salary": "ts-node src/migrate-salary-data.ts",
+    "create-sample-offers": "ts-node src/create-sample-offers.ts",
+    "deploy-views": "ts-node src/deploy-salary-views.ts",
+    "deploy-views-step": "ts-node src/deploy-views-step-by-step.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",

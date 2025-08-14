@@ -39,12 +39,16 @@ export default function SalaryAnalytics() {
   const {analytics, jobs, offers} = data;
 
   const formatSalary = (amount: number, currency: string = 'USD') => {
+    // Format with "k" abbreviation for better readability
+    if (amount >= 1000) {
+      return `$${Math.round(amount / 1000)}k`;
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount / 100); // Convert from cents
+    }).format(amount);
   };
 
   return (

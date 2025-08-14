@@ -1,41 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum JobStatus {
-  SAVED
-  APPLIED
-  INTERVIEW
-  OFFER
-  REJECTED
-}
-
-enum AppStatus {
-  DRAFT
-  APPLIED
-  INTERVIEW
-  OA
-  OFFER
-  REJECTED
-}
-
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String?
-  createdAt    DateTime      @default(now())
-  resumes      Resume[]
-  jobs         Job[]
-  applications Application[]
-  templates    Template[]
-  interviews   Interview[]
-  salaryOffers SalaryOffer[]
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String?
+  createdAt     DateTime        @default(now())
+  applications  Application[]
+  interviews    Interview[]
+  jobs          Job[]
+  resumes       Resume[]
   salaryHistory SalaryHistory[]
+  salaryOffers  SalaryOffer[]
+  templates     Template[]
 }
 
 model Resume {
@@ -44,60 +27,68 @@ model Resume {
   name         String
   fileUrl      String
   createdAt    DateTime      @default(now())
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications Application[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Job {
-  id             String        @id @default(cuid())
-  userId         String
-  title          String
-  company        String
-  url            String
-  source         String?
-  location       String?
-  salary         String? // Keep for backward compatibility
-  salaryMin      Int?     // Minimum salary in cents
-  salaryMax      Int?     // Maximum salary in cents
-  salaryCurrency String   @default("USD")
-  salaryType     SalaryType @default(ANNUAL)
-  tags           String[]
-  status         JobStatus     @default(SAVED)
-  faviconUrl     String?
-  notes          String?
-  deadline       DateTime?
-  lastActivityAt DateTime      @default(now())
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications   Application[]
-  interviews     Interview[]
-  salaryOffers   SalaryOffer[]
-  salaryHistory  SalaryHistory[]
+  id              String          @id @default(cuid())
+  userId          String
+  title           String
+  company         String
+  url             String
+  source          String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deadline        DateTime?
+  faviconUrl      String?
+  lastActivityAt  DateTime        @default(now())
+  location        String?
+  notes           String?
+  salary          String?
+  status          JobStatus       @default(SAVED)
+  tags            String[]
+  isRemote        Boolean         @default(false)
+  locationCity    String?
+  locationCountry String?
+  locationState   String?
+  postedAt        DateTime?
+  salaryCurrency  String          @default("USD")
+  salaryMax       Int?
+  salaryMin       Int?
+  salaryType      SalaryType      @default(ANNUAL)
+  applications    Application[]
+  interviews      Interview[]
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  salaryHistory   SalaryHistory[]
+  salaryOffers    SalaryOffer[]
 
   @@index([userId, status, createdAt])
   @@index([userId, lastActivityAt])
   @@index([userId, deadline])
   @@index([userId, salaryMin])
   @@index([userId, salaryMax])
+  @@index([userId, locationCity])
+  @@index([userId, locationState])
+  @@index([userId, isRemote])
 }
 
 model Application {
-  id         String    @id @default(cuid())
-  userId     String
-  jobId      String
-  resumeId   String?
-  coverNote  String?
-  status     AppStatus @default(APPLIED)
-  appliedAt  DateTime?
-  nextAction DateTime?
-  notes      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job        Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  resume     Resume?   @relation(fields: [resumeId], references: [id])
-  interviews Interview[]
+  id           String        @id @default(cuid())
+  userId       String
+  jobId        String
+  resumeId     String?
+  coverNote    String?
+  status       AppStatus     @default(APPLIED)
+  appliedAt    DateTime?
+  nextAction   DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  job          Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume       Resume?       @relation(fields: [resumeId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews   Interview[]
   salaryOffers SalaryOffer[]
 
   @@index([userId, nextAction])
@@ -114,29 +105,89 @@ model Template {
 }
 
 model Interview {
-  id          String   @id @default(cuid())
-  userId      String
-  jobId       String
+  id            String          @id @default(cuid())
+  userId        String
+  jobId         String
   applicationId String?
-  title       String   // e.g., "Technical Interview", "Phone Screen"
-  type        InterviewType
-  scheduledAt DateTime
-  duration    Int      // in minutes
-  location    String?  // physical location or video call link
-  participants String? // interviewer names or meeting details
-  notes       String?
-  status      InterviewStatus @default(SCHEDULED)
-  reminderAt  DateTime? // when to send reminder
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  application Application? @relation(fields: [applicationId], references: [id])
+  title         String
+  type          InterviewType
+  scheduledAt   DateTime
+  duration      Int
+  location      String?
+  participants  String?
+  notes         String?
+  status        InterviewStatus @default(SCHEDULED)
+  reminderAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  application   Application?    @relation(fields: [applicationId], references: [id])
+  job           Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
   @@index([userId, status])
   @@index([jobId])
+}
+
+model SalaryOffer {
+  id            String       @id @default(cuid())
+  userId        String
+  jobId         String
+  applicationId String?
+  amount        Int
+  currency      String       @default("USD")
+  type          SalaryType   @default(ANNUAL)
+  status        OfferStatus  @default(PENDING)
+  offeredAt     DateTime     @default(now())
+  expiresAt     DateTime?
+  notes         String?
+  benefits      String[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  application   Application? @relation(fields: [applicationId], references: [id])
+  job           Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, offeredAt])
+  @@index([jobId])
+}
+
+model SalaryHistory {
+  id            String     @id @default(cuid())
+  userId        String
+  jobId         String
+  amount        Int
+  currency      String     @default("USD")
+  type          SalaryType @default(ANNUAL)
+  effectiveDate DateTime   @default(now())
+  changeType    String
+  notes         String?
+  createdAt     DateTime   @default(now())
+  job           Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, effectiveDate])
+  @@index([jobId])
+}
+
+
+
+enum JobStatus {
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum AppStatus {
+  DRAFT
+  APPLIED
+  INTERVIEW
+  OA
+  OFFER
+  REJECTED
 }
 
 enum InterviewType {
@@ -173,48 +224,4 @@ enum OfferStatus {
   REJECTED
   NEGOTIATING
   EXPIRED
-}
-
-model SalaryOffer {
-  id           String      @id @default(cuid())
-  userId       String
-  jobId        String
-  applicationId String?
-  amount       Int         // Salary amount in cents
-  currency     String      @default("USD")
-  type         SalaryType  @default(ANNUAL)
-  status       OfferStatus @default(PENDING)
-  offeredAt    DateTime    @default(now())
-  expiresAt    DateTime?
-  notes        String?
-  benefits     String[]    // Array of benefit descriptions
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job          Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  application  Application? @relation(fields: [applicationId], references: [id])
-
-  @@index([userId, status])
-  @@index([userId, offeredAt])
-  @@index([jobId])
-}
-
-model SalaryHistory {
-  id           String      @id @default(cuid())
-  userId       String
-  jobId        String
-  amount       Int         // Salary amount in cents
-  currency     String      @default("USD")
-  type         SalaryType  @default(ANNUAL)
-  effectiveDate DateTime   @default(now())
-  changeType   String      // "INITIAL", "RAISE", "BONUS", "ADJUSTMENT"
-  notes        String?
-  createdAt    DateTime    @default(now())
-  
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job          Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  @@index([userId, effectiveDate])
-  @@index([jobId])
 }
