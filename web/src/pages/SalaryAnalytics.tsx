@@ -1,52 +1,50 @@
-import {
-  useSalaryStats,
-  useSalaryByCompany,
-  useSalaryByLocation,
-  useSalaryAnalytics,
-} from '../lib/salaryAnalytics';
+import {useConsolidatedSalaryData} from '../lib/salaryAnalytics';
+import TimelineChart from '../components/analytics/TimelineChart';
+import RemoteSplit from '../components/analytics/RemoteSplit';
+import Recommendations from '../components/analytics/Recommendations';
 
 export default function SalaryAnalytics() {
-  // Use granular hooks for better performance and error handling
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useSalaryStats();
-  const {
-    data: companies,
-    isLoading: companiesLoading,
-    error: companiesError,
-  } = useSalaryByCompany();
-  const {
-    data: locations,
-    isLoading: locationsLoading,
-    error: locationsError,
-  } = useSalaryByLocation();
-  const {
-    data: fullData,
-    isLoading: fullLoading,
-    error: fullError,
-  } = useSalaryAnalytics();
+  // Use consolidated hook for better performance - only ONE API call!
+  const {data, isLoading, error: hasError} = useConsolidatedSalaryData();
 
-  // Check if any data is loading
-  const isLoading =
-    statsLoading || companiesLoading || locationsLoading || fullLoading;
-
-  // Check if any data has errors
-  const hasError = statsError || companiesError || locationsError || fullError;
+  // Extract data from consolidated response
+  const stats = data?.stats;
+  const companies = data?.companies;
+  const locations = data?.locations;
+  const timelineData = data?.timeline;
+  const remoteSplitData = data?.remoteSplit;
+  const offers = data?.offers;
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-950 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-800 rounded w-1/2 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-gray-800 rounded"></div>
-              ))}
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-pulse mb-8">
+            <div className="h-8 bg-gray-800 rounded w-1/3 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-800 rounded w-1/2 mx-auto mb-8"></div>
+          </div>
+
+          {/* Loading Progress */}
+          <div className="bg-gray-800 border border-gray-600 rounded-xl p-8 max-w-md mx-auto">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-white mb-2">
+              Loading Salary Analytics
+            </h2>
+            <p className="text-gray-400 mb-4">
+              Analyzing your data and generating insights...
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+              <div
+                className="bg-blue-500 h-2 rounded-full animate-pulse"
+                style={{width: '60%'}}
+              ></div>
             </div>
+
+            <p className="text-sm text-gray-500">
+              This may take a few seconds for the first load
+            </p>
           </div>
         </div>
       </div>
@@ -71,7 +69,7 @@ export default function SalaryAnalytics() {
     );
   }
 
-  if (!stats || !fullData) {
+  if (!stats || !offers) {
     return (
       <div className="min-h-screen bg-gray-950 p-6">
         <div className="max-w-7xl mx-auto">
@@ -85,8 +83,7 @@ export default function SalaryAnalytics() {
     );
   }
 
-  const {offers} = fullData;
-  const hasLowSignal = offers.length < 5;
+  const hasLowSignal = offers?.length < 5;
 
   const formatSalary = (amount: number, currency: string = 'USD') => {
     // Format with "k" abbreviation for better readability
@@ -148,7 +145,7 @@ export default function SalaryAnalytics() {
           </div>
 
           <div className="mt-6 text-center">
-            {offers.length >= 7 ? (
+            {offers?.length >= 7 ? (
               <p className="text-gray-300">
                 Your top offers sit around the 75th percentile (≈{' '}
                 {formatSalary(stats.p75)}).
@@ -321,14 +318,14 @@ export default function SalaryAnalytics() {
         )}
 
         {/* Recent Offers */}
-        {offers.length > 0 && (
+        {offers && offers.length > 0 && (
           <div className="bg-gray-800 border border-gray-600 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
               Recent Offers
             </h2>
 
             <div className="space-y-4">
-              {offers.slice(0, 8).map((offer) => (
+              {offers?.slice(0, 8).map((offer) => (
                 <div
                   key={offer.id}
                   className="flex items-center justify-between p-4 bg-gray-700 rounded-lg border border-gray-600"
@@ -364,6 +361,27 @@ export default function SalaryAnalytics() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Timeline Chart */}
+        {timelineData && timelineData.length > 0 && (
+          <TimelineChart data={timelineData} />
+        )}
+
+        {/* Remote vs Onsite Comparison */}
+        {remoteSplitData &&
+          (remoteSplitData.remote.count > 0 ||
+            remoteSplitData.onsite.count > 0) && (
+            <RemoteSplit data={remoteSplitData} />
+          )}
+
+        {/* Smart Recommendations */}
+        {companies && companies.length > 0 && stats && offers && (
+          <Recommendations
+            companies={companies}
+            stats={stats}
+            offers={offers}
+          />
         )}
 
         {/* Export Section */}

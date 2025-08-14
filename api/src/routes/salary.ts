@@ -1,67 +1,96 @@
 import express from 'express';
 import prisma from '../prisma';
 
+// Simple in-memory cache for salary analytics (5 minute TTL)
+const salaryCache = new Map<string, {data: any; timestamp: number}>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const router = express.Router();
 
 // Get salary analytics for the current user
 router.get('/salary/analytics', async (req, res) => {
   const userId = (req as any).userId as string;
 
+  // Check cache first
+  const cacheKey = `salary-analytics-${userId}`;
+  const cached = salaryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
   try {
-    // Get all jobs with salary data (including old salary field)
-    const jobsWithSalary = await prisma.job.findMany({
-      where: {
-        userId,
-        OR: [
-          {salaryMin: {not: null}},
-          {salaryMax: {not: null}},
-          {salary: {not: null}},
-        ],
-      },
-      select: {
-        id: true,
-        title: true,
-        company: true,
-        location: true,
-        salary: true, // Keep the old salary field
-        salaryMin: true,
-        salaryMax: true,
-        salaryCurrency: true,
-        salaryType: true,
-        status: true,
-        createdAt: true,
-      },
-      orderBy: {createdAt: 'desc'},
-    });
+    // OPTIMIZED: Get all data in fewer queries with better performance
+    const [jobsWithSalary, offers, salaryHistory] = await Promise.all([
+      // Get jobs with salary data
+      prisma.job.findMany({
+        where: {
+          userId,
+          OR: [
+            {salaryMin: {not: null}},
+            {salaryMax: {not: null}},
+            {salary: {not: null}},
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          company: true,
+          location: true,
+          salary: true,
+          salaryMin: true,
+          salaryMax: true,
+          salaryCurrency: true,
+          salaryType: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: {createdAt: 'desc'},
+      }),
 
-    // Get all salary offers
-    const offers = await prisma.salaryOffer.findMany({
-      where: {userId},
-      include: {
-        job: {
-          select: {
-            title: true,
-            company: true,
-            location: true,
+      // Get salary offers with minimal job data
+      prisma.salaryOffer.findMany({
+        where: {userId},
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          type: true,
+          status: true,
+          offeredAt: true,
+          notes: true,
+          benefits: true,
+          job: {
+            select: {
+              title: true,
+              company: true,
+              location: true,
+            },
           },
         },
-      },
-      orderBy: {offeredAt: 'desc'},
-    });
+        orderBy: {offeredAt: 'desc'},
+      }),
 
-    // Get salary history
-    const salaryHistory = await prisma.salaryHistory.findMany({
-      where: {userId},
-      include: {
-        job: {
-          select: {
-            title: true,
-            company: true,
+      // Get salary history with minimal job data
+      prisma.salaryHistory.findMany({
+        where: {userId},
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          type: true,
+          effectiveDate: true,
+          changeType: true,
+          notes: true,
+          job: {
+            select: {
+              title: true,
+              company: true,
+            },
           },
         },
-      },
-      orderBy: {effectiveDate: 'desc'},
-    });
+        orderBy: {effectiveDate: 'desc'},
+      }),
+    ]);
 
     // Calculate analytics
     const analytics = {
@@ -160,12 +189,20 @@ router.get('/salary/analytics', async (req, res) => {
         allSalaries.length;
     }
 
-    res.json({
+    const responseData = {
       analytics,
       jobs: jobsWithSalary,
       offers,
       salaryHistory,
+    };
+
+    // Cache the response
+    salaryCache.set(cacheKey, {
+      data: responseData,
+      timestamp: Date.now(),
     });
+
+    res.json(responseData);
   } catch (error) {
     console.error('Failed to fetch salary analytics:', error);
     res.status(500).json({error: 'Failed to fetch salary analytics'});

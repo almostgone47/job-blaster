@@ -68,6 +68,7 @@ model Job {
   @@index([userId, deadline])
   @@index([userId, salaryMin])
   @@index([userId, salaryMax])
+  @@index([userId, salaryMin, salaryMax]) // Composite index for salary queries
   @@index([userId, locationCity])
   @@index([userId, locationState])
   @@index([userId, isRemote])
@@ -151,6 +152,7 @@ model SalaryOffer {
   @@index([userId, status])
   @@index([userId, offeredAt])
   @@index([jobId])
+  @@index([userId, jobId]) // Composite index for faster joins
 }
 
 model SalaryHistory {
