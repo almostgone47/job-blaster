@@ -1,6 +1,5 @@
 import express from 'express';
-import {PrismaClient} from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../prisma';
 const router = express.Router();
 
 // List all templates for the current user

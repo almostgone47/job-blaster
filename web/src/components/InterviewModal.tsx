@@ -93,7 +93,23 @@ export default function InterviewModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !scheduledAt) return;
+    console.log('Form submitted!');
+    console.log('Form data:', {
+      title,
+      scheduledAt,
+      type,
+      duration,
+      location,
+      participants,
+      notes,
+      status,
+      reminderAt,
+    });
+
+    if (!title.trim() || !scheduledAt) {
+      console.log('Validation failed:', {title: title.trim(), scheduledAt});
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -125,7 +141,7 @@ export default function InterviewModal({
         });
       } else {
         // Creating a new interview
-        await createInterview({
+        console.log('Creating new interview with data:', {
           jobId: job.id,
           title: title.trim(),
           type,
@@ -136,6 +152,20 @@ export default function InterviewModal({
           notes: notes.trim() || undefined,
           reminderAt: reminderAt || undefined,
         });
+
+        const result = await createInterview({
+          jobId: job.id,
+          title: title.trim(),
+          type,
+          scheduledAt,
+          duration,
+          location: location.trim() || undefined,
+          participants: participants.trim() || undefined,
+          notes: notes.trim() || undefined,
+          reminderAt: reminderAt || undefined,
+        });
+
+        console.log('Create interview result:', result);
       }
       onSaved();
       onClose();
@@ -461,79 +491,85 @@ export default function InterviewModal({
                 placeholder="Interview preparation notes, questions to ask, etc."
               />
             </div>
+
+            {/* Form Actions */}
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex gap-2">
+                {interview && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="rounded border border-red-600 px-4 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-400 border-t-transparent"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete'
+                    )}
+                  </button>
+                )}
+                {editingInterviewId && !interview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingInterviewId(null);
+                      setTitle('');
+                      setType('TECHNICAL');
+                      setScheduledAt('');
+                      setDuration(60);
+                      setLocation('');
+                      setParticipants('');
+                      setNotes('');
+                      setStatus('SCHEDULED');
+                      setReminderAt('');
+                    }}
+                    className="rounded border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                  >
+                    Clear Form
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !title.trim() || !scheduledAt}
+                  className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      {interview || editingInterviewId
+                        ? 'Updating...'
+                        : 'Scheduling...'}
+                    </>
+                  ) : interview || editingInterviewId ? (
+                    'Update Interview'
+                  ) : (
+                    'Schedule Interview'
+                  )}
+                </button>
+              </div>
+            </div>
           </form>
         </div>
 
-        {/* Fixed Footer */}
+        {/* Fixed Footer - Just for display info */}
         <div className="p-6 pt-4 border-t border-gray-600 bg-gray-800 rounded-b-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              {interview && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="rounded border border-red-600 px-4 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isDeleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-400 border-t-transparent"></div>
-                      Deleting...
-                    </>
-                  ) : (
-                    'Delete'
-                  )}
-                </button>
-              )}
-              {editingInterviewId && !interview && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingInterviewId(null);
-                    setTitle('');
-                    setType('TECHNICAL');
-                    setScheduledAt('');
-                    setDuration(60);
-                    setLocation('');
-                    setParticipants('');
-                    setNotes('');
-                    setStatus('SCHEDULED');
-                    setReminderAt('');
-                  }}
-                  className="rounded border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                >
-                  Clear Form
-                </button>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !title.trim() || !scheduledAt}
-                className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    {interview || editingInterviewId
-                      ? 'Updating...'
-                      : 'Scheduling...'}
-                  </>
-                ) : interview || editingInterviewId ? (
-                  'Update Interview'
-                ) : (
-                  'Schedule Interview'
-                )}
-              </button>
-            </div>
+          <div className="text-center text-sm text-gray-400">
+            Interview details will be saved when you click the submit button
+            above
           </div>
         </div>
       </div>

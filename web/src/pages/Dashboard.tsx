@@ -1,7 +1,7 @@
 import {useState, useMemo} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {listJobs, updateJob, listApplications, listResumes} from '../api';
-import type {Job, JobStatus, Application, Resume} from '../types';
+import type {Job, JobStatus, Application, Resume, Interview} from '../types';
 import AddJobModal from '../components/AddJobModal';
 import EditJobModal from '../components/EditJobModal';
 import ApplicationModal from '../components/ApplicationModal';
@@ -9,6 +9,8 @@ import ResumeModal from '../components/ResumeModal';
 import TemplateManager from '../components/TemplateManager';
 import InterviewManager from '../components/InterviewManager';
 import InterviewModal from '../components/InterviewModal';
+import InterviewNotifications from '../components/InterviewNotifications';
+import InterviewBanner from '../components/InterviewBanner';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -162,6 +164,17 @@ export default function Dashboard() {
     setInterviewModalOpen(true);
   }
 
+  // Handle interview notification click
+  function handleInterviewNotificationClick(interview: Interview) {
+    // Find the full job object from the jobs array
+    const fullJob = jobs.find((job) => job.id === interview.jobId);
+    if (fullJob) {
+      setSelectedJobForInterview(fullJob);
+      setInterviewModalOpen(true);
+    }
+    // TODO: In a future update, we could pre-fill the form with the interview data
+  }
+
   // Clear all snoozed deadlines
   function clearSnoozedDeadlines() {
     setSnoozedDeadlines(new Set());
@@ -265,6 +278,14 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-full space-y-4 bg-gray-950">
+      {/* Interview Banner for urgent interviews */}
+      <InterviewBanner onInterviewClick={handleInterviewNotificationClick} />
+
+      {/* Interview Notifications */}
+      <InterviewNotifications
+        onInterviewClick={handleInterviewNotificationClick}
+      />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-white">Dashboard</h2>

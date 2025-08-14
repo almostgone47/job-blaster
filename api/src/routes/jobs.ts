@@ -1,6 +1,6 @@
 import express from 'express';
-import {PrismaClient, JobStatus} from '@prisma/client';
-const prisma = new PrismaClient();
+import {JobStatus} from '@prisma/client';
+import prisma from '../prisma';
 const router = express.Router();
 
 router.get('/jobs', async (req, res) => {

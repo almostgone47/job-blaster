@@ -111,6 +111,16 @@ export default function ApplicationModal({
         );
         const result = await updateApplication(application.id, updateData);
         console.log('Update result:', result);
+
+        // Debug: Check if the data was actually saved
+        console.log('Original form values:', {
+          status,
+          appliedAt,
+          resumeId,
+          coverNote,
+          nextActionDate,
+          notes,
+        });
       } else {
         // Create new application - expects Date objects
         const createData = {
@@ -130,6 +140,16 @@ export default function ApplicationModal({
         );
         const result = await createApplication(createData);
         console.log('Create result:', result);
+
+        // Debug: Check if the data was actually saved
+        console.log('Original form values:', {
+          status,
+          appliedAt,
+          resumeId,
+          coverNote,
+          nextActionDate,
+          notes,
+        });
       }
 
       onSaved();

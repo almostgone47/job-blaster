@@ -1,35 +1,38 @@
 import express from 'express';
-import {PrismaClient} from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../prisma';
 const router = express.Router();
 
 /**
  * POST /applications
- * body: { jobId: string, coverNote?: string }
- * - sets appliedAt = now, nextAction = appliedAt + 5 days
+ * body: { jobId: string, status?: string, appliedAt?: Date, resumeId?: string, coverNote?: string, nextAction?: Date, notes?: string }
+ * - sets appliedAt = now if not provided, nextAction = appliedAt + 5 days if not provided
  * - updates Job.lastActivityAt
  */
 router.post('/applications', async (req, res) => {
   const userId = (req as any).userId as string;
-  const {jobId, coverNote} = req.body ?? {};
+  const {jobId, status, appliedAt, resumeId, coverNote, nextAction, notes} =
+    req.body ?? {};
   if (!jobId) return res.status(400).json({error: 'jobId required'});
 
   const job = await prisma.job.findUnique({where: {id: jobId}});
   if (!job || job.userId !== userId)
     return res.status(404).json({error: 'job not found'});
 
-  const appliedAt = new Date();
-  const nextAction = new Date(appliedAt.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const defaultAppliedAt = new Date();
+  const defaultNextAction = new Date(
+    defaultAppliedAt.getTime() + 5 * 24 * 60 * 60 * 1000,
+  );
 
   const app = await prisma.application.create({
     data: {
       userId,
       jobId,
-      coverNote: coverNote ?? null,
-      status: 'APPLIED',
-      appliedAt,
-      nextAction,
-      notes: null,
+      status: status || 'APPLIED',
+      appliedAt: appliedAt ? new Date(appliedAt) : defaultAppliedAt,
+      resumeId: resumeId || null,
+      coverNote: coverNote || null,
+      nextAction: nextAction ? new Date(nextAction) : defaultNextAction,
+      notes: notes || null,
     },
   });
 
