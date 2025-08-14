@@ -1,11 +1,39 @@
-import {useQuery} from '@tanstack/react-query';
-import {getSalaryAnalytics} from '../api';
+import {
+  useSalaryStats,
+  useSalaryByCompany,
+  useSalaryByLocation,
+  useSalaryAnalytics,
+} from '../lib/salaryAnalytics';
 
 export default function SalaryAnalytics() {
-  const {data, isLoading, error} = useQuery({
-    queryKey: ['salary-analytics'],
-    queryFn: getSalaryAnalytics,
-  });
+  // Use granular hooks for better performance and error handling
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useSalaryStats();
+  const {
+    data: companies,
+    isLoading: companiesLoading,
+    error: companiesError,
+  } = useSalaryByCompany();
+  const {
+    data: locations,
+    isLoading: locationsLoading,
+    error: locationsError,
+  } = useSalaryByLocation();
+  const {
+    data: fullData,
+    isLoading: fullLoading,
+    error: fullError,
+  } = useSalaryAnalytics();
+
+  // Check if any data is loading
+  const isLoading =
+    statsLoading || companiesLoading || locationsLoading || fullLoading;
+
+  // Check if any data has errors
+  const hasError = statsError || companiesError || locationsError || fullError;
 
   if (isLoading) {
     return (
@@ -18,7 +46,7 @@ export default function SalaryAnalytics() {
     );
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="p-6 bg-gray-800 rounded-lg">
         <p className="text-red-400 text-center">
@@ -28,7 +56,7 @@ export default function SalaryAnalytics() {
     );
   }
 
-  if (!data) {
+  if (!stats || !fullData) {
     return (
       <div className="p-6 bg-gray-800 rounded-lg">
         <p className="text-gray-400 text-center">No salary data available</p>
@@ -36,7 +64,7 @@ export default function SalaryAnalytics() {
     );
   }
 
-  const {analytics, jobs, offers} = data;
+  const {analytics, jobs, offers} = fullData;
 
   const formatSalary = (amount: number, currency: string = 'USD') => {
     // Format with "k" abbreviation for better readability
@@ -108,6 +136,66 @@ export default function SalaryAnalytics() {
                 {formatSalary(analytics.salaryRange.max)}
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Company Breakdown */}
+      {companies && companies.length > 0 && (
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Salary by Company
+          </h3>
+          <div className="space-y-3">
+            {companies.map((company) => (
+              <div
+                key={company.company}
+                className="flex items-center justify-between p-3 bg-gray-700 rounded border border-gray-600"
+              >
+                <div>
+                  <p className="font-medium text-white">{company.company}</p>
+                  <p className="text-sm text-gray-400">
+                    {company.offer_count} jobs
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-white">
+                    {formatSalary(company.avgSalary)}
+                  </p>
+                  <p className="text-sm text-gray-400">Average</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Location Breakdown */}
+      {locations && locations.length > 0 && (
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Salary by Location
+          </h3>
+          <div className="space-y-3">
+            {locations.map((location) => (
+              <div
+                key={location.location}
+                className="flex items-center justify-between p-3 bg-gray-700 rounded border border-gray-600"
+              >
+                <div>
+                  <p className="font-medium text-white">{location.location}</p>
+                  <p className="text-sm text-gray-400">
+                    {location.offer_count} jobs
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-white">
+                    {formatSalary(location.avgSalary)}
+                  </p>
+                  <p className="text-sm text-gray-400">Average</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
