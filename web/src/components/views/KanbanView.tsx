@@ -370,7 +370,9 @@ export default function KanbanView({
                 ✕
               </button>
             </div>
-            <InterviewManager scrollToInterviewId={scrollToJobId} />
+            <InterviewManager
+              scrollToInterviewId={scrollToJobId}
+            />
           </div>
         </div>
       )}
