@@ -3,6 +3,7 @@ import Jobs from './pages/Jobs';
 import SalaryAnalytics from './pages/SalaryAnalytics';
 import Documents from './pages/Documents';
 import {UserPreferencesProvider} from './contexts/UserPreferences';
+import {UserProfileDropdown} from './components/UserProfileDropdown';
 
 export default function App() {
   return (
@@ -35,9 +36,7 @@ export default function App() {
                 </nav>
               </div>
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-400">
-                  MVP - Job Tracking & Analytics
-                </span>
+                <UserProfileDropdown />
               </div>
             </div>
           </header>

@@ -70,11 +70,9 @@ describe('App', () => {
     expect(jobsLink.closest('a')).toHaveAttribute('href', '/');
   });
 
-  it('shows the MVP subtitle', () => {
+  it('shows the user profile dropdown', () => {
     renderApp();
 
-    expect(
-      screen.getByText('MVP - Job Tracking & Analytics'),
-    ).toBeInTheDocument();
+    expect(screen.getByTitle('User Profile')).toBeInTheDocument();
   });
 });

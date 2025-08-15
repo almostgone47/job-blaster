@@ -113,16 +113,6 @@ exports[`SalaryAnalytics Page > Low signal state (1-2 offers) > renders CollectM
       <div
         class="text-center relative"
       >
-        <div
-          class="absolute top-0 right-0"
-        >
-          <button
-            class="bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white px-3 py-2 rounded-lg transition-colors text-sm"
-            title="Display Preferences"
-          >
-            ⚙️ Display Settings
-          </button>
-        </div>
         <h1
           class="text-4xl font-bold text-white mb-4"
         >
@@ -368,16 +358,6 @@ exports[`SalaryAnalytics Page > Normal state (5+ offers) > renders full analytic
       <div
         class="text-center relative"
       >
-        <div
-          class="absolute top-0 right-0"
-        >
-          <button
-            class="bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white px-3 py-2 rounded-lg transition-colors text-sm"
-            title="Display Preferences"
-          >
-            ⚙️ Display Settings
-          </button>
-        </div>
         <h1
           class="text-4xl font-bold text-white mb-4"
         >

@@ -301,7 +301,7 @@ describe('SalaryAnalytics Page', () => {
   });
 
   describe('Header and navigation', () => {
-    it('renders header with title and settings button', () => {
+    it('renders header with title (settings moved to header dropdown)', () => {
       mockUseConsolidatedSalaryData.mockReturnValue({
         data: {
           stats: {
@@ -344,7 +344,7 @@ describe('SalaryAnalytics Page', () => {
       expect(container.textContent).toContain(
         'Turn your job data into negotiation power',
       );
-      expect(container.textContent).toContain('Display Settings');
+      // Note: Display Settings button has been moved to the header dropdown
     });
   });
 });
