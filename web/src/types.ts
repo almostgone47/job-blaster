@@ -30,6 +30,15 @@ export interface Job {
   createdAt: string;
   updatedAt: string;
   lastActivityAt: string;
+  isRemote?: boolean;
+  locationCity?: string | null;
+  locationState?: string | null;
+  locationCountry?: string | null;
+  postedAt?: string | null;
+  salaryCurrency?: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryType?: string;
 }
 
 export interface Application {

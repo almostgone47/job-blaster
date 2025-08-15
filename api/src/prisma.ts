@@ -4,7 +4,8 @@ import {PrismaClient} from '@prisma/client';
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
   // Fix connection pool timeout issues
-  // Use connection_limit in DATABASE_URL or set via environment
+  // The connection pool settings are controlled by the DATABASE_URL
+  // Add ?connection_limit=5&pool_timeout=30 to your DATABASE_URL if needed
 });
 
 // Handle graceful shutdown
