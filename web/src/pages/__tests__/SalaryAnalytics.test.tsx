@@ -1,7 +1,6 @@
-import {render} from '@testing-library/react';
-import {describe, it, expect, vi} from 'vitest';
+import {render} from '../../test/test-utils';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import SalaryAnalytics from '../SalaryAnalytics';
-import {UserPreferencesProvider} from '../../contexts/UserPreferences';
 
 // Mock the consolidated hook
 const mockUseConsolidatedSalaryData = vi.fn();
@@ -9,11 +8,6 @@ const mockUseConsolidatedSalaryData = vi.fn();
 vi.mock('../../lib/salaryAnalytics', () => ({
   useConsolidatedSalaryData: () => mockUseConsolidatedSalaryData(),
 }));
-
-// Helper to render with providers
-const renderWithProviders = (component: React.ReactElement) => {
-  return render(<UserPreferencesProvider>{component}</UserPreferencesProvider>);
-};
 
 describe('SalaryAnalytics Page', () => {
   beforeEach(() => {
@@ -28,7 +22,7 @@ describe('SalaryAnalytics Page', () => {
         error: null,
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container).toMatchSnapshot();
       expect(container.textContent).toContain('Loading Salary Analytics');
@@ -46,7 +40,7 @@ describe('SalaryAnalytics Page', () => {
         error: new Error('Failed to fetch data'),
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container).toMatchSnapshot();
       expect(container.textContent).toContain(
@@ -69,7 +63,7 @@ describe('SalaryAnalytics Page', () => {
         error: null,
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container).toMatchSnapshot();
       expect(container.textContent).toContain('No salary data available');
@@ -119,7 +113,7 @@ describe('SalaryAnalytics Page', () => {
         error: null,
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container).toMatchSnapshot();
       expect(container.textContent).toContain(
@@ -287,7 +281,7 @@ describe('SalaryAnalytics Page', () => {
         error: null,
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container).toMatchSnapshot();
 
@@ -344,7 +338,7 @@ describe('SalaryAnalytics Page', () => {
         error: null,
       });
 
-      const {container} = renderWithProviders(<SalaryAnalytics />);
+      const {container} = render(<SalaryAnalytics />);
 
       expect(container.textContent).toContain('Salary Analytics');
       expect(container.textContent).toContain(

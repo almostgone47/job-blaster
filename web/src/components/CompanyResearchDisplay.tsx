@@ -1,7 +1,7 @@
 import type {CompanyResearch} from '../types';
 
 interface CompanyResearchDisplayProps {
-  research: CompanyResearch;
+  research?: CompanyResearch;
   compact?: boolean;
 }
 
@@ -9,6 +9,15 @@ export default function CompanyResearchDisplay({
   research,
   compact = false,
 }: CompanyResearchDisplayProps) {
+  // Handle undefined research data gracefully
+  if (!research) {
+    return (
+      <div className="text-sm text-gray-500 italic">
+        No company research available
+      </div>
+    );
+  }
+
   if (compact) {
     return (
       <div className="text-sm text-gray-300 space-y-1">
@@ -25,12 +34,13 @@ export default function CompanyResearchDisplay({
               : research.insights}
           </div>
         )}
-        {(research.pros.length > 0 || research.cons.length > 0) && (
+        {((research.pros && research.pros.length > 0) ||
+          (research.cons && research.cons.length > 0)) && (
           <div className="flex gap-4 text-xs">
-            {research.pros.length > 0 && (
+            {research.pros && research.pros.length > 0 && (
               <div className="text-green-400">+{research.pros.length} pros</div>
             )}
-            {research.cons.length > 0 && (
+            {research.cons && research.cons.length > 0 && (
               <div className="text-red-400">-{research.cons.length} cons</div>
             )}
           </div>
@@ -61,7 +71,7 @@ export default function CompanyResearchDisplay({
 
       {/* Pros and Cons */}
       <div className="grid grid-cols-2 gap-4">
-        {research.pros.length > 0 && (
+        {research.pros && research.pros.length > 0 && (
           <div>
             <div className="text-sm font-medium text-green-400 mb-2">Pros</div>
             <ul className="text-sm text-gray-300 space-y-1">
@@ -75,7 +85,7 @@ export default function CompanyResearchDisplay({
           </div>
         )}
 
-        {research.cons.length > 0 && (
+        {research.cons && research.cons.length > 0 && (
           <div>
             <div className="text-sm font-medium text-red-400 mb-2">Cons</div>
             <ul className="text-sm text-gray-300 space-y-1">

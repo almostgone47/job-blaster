@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import {env} from './env';
 import {requireAuth} from './auth';
+import {checkDatabaseHealth, logDatabaseInfo} from './db-health';
 import jobs from './routes/jobs';
 import parse from './routes/parse';
 import apps from './routes/apps';
@@ -18,6 +19,20 @@ app.use(express.json());
 
 app.get('/health', (_, res) => res.json({ok: true}));
 
+// Database health check endpoint
+app.get('/health/db', async (_, res) => {
+  try {
+    const health = await checkDatabaseHealth();
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check database health',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 // Dev auth via header "x-user-id"
 app.use(requireAuth);
 
@@ -33,4 +48,5 @@ app.use(companyResearch);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);
+  logDatabaseInfo(); // Log database connection info on startup
 });

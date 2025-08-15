@@ -166,6 +166,9 @@ export default function SalaryAnalytics() {
             </button>
           </div>
 
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Salary Analytics
+          </h1>
           <p className="text-xl text-gray-300 mb-6">
             Turn your job data into negotiation power.
           </p>
