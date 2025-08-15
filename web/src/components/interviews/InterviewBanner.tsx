@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Interview} from '../types';
-import {listInterviews} from '../api';
+import type {Interview} from '../../types';
+import {listInterviews} from '../../api';
 
 interface InterviewBannerProps {
   onInterviewClick: (interview: Interview) => void;

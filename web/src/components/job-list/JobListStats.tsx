@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import type {Job, Application, Interview, SalaryOffer} from '../types';
+import type {Job, Application, Interview, SalaryOffer} from '../../types';
 
 interface JobListStatsProps {
   jobs: Job[];
@@ -19,7 +19,7 @@ interface DashboardCounts {
 
 function getDashboardCounts(
   jobs: Job[],
-  applications: Application[],
+
   interviews: Interview[],
   salaryOffers: SalaryOffer[],
 ): DashboardCounts {
@@ -74,14 +74,14 @@ function getDashboardCounts(
 
 export default function JobListStats({
   jobs,
-  applications,
+
   interviews,
   salaryOffers,
   isLoading = false,
 }: JobListStatsProps) {
   const counts = useMemo(
-    () => getDashboardCounts(jobs, applications, interviews, salaryOffers),
-    [jobs, applications, interviews, salaryOffers],
+    () => getDashboardCounts(jobs, interviews, salaryOffers),
+    [jobs, interviews, salaryOffers],
   );
 
   if (isLoading) {

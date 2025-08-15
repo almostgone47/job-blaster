@@ -1,8 +1,8 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Job, Application, AppStatus, Resume} from '../types';
-import {listTemplates} from '../api';
-import {processTemplate} from '../utils/templateProcessor';
+import type {Job, Application, AppStatus, Resume} from '../../types';
+import {listTemplates} from '../../api';
+import {processTemplate} from '../../utils/templateProcessor';
 
 const APP_STATUS_OPTIONS: AppStatus[] = [
   'DRAFT',
@@ -89,7 +89,7 @@ export default function ApplicationModal({
 
     setLoading(true);
     try {
-      const {createApplication, updateApplication} = await import('../api');
+      const {createApplication, updateApplication} = await import('../../api');
 
       if (application) {
         // Update existing application - expects string dates

@@ -1,7 +1,7 @@
 import {useQuery} from '@tanstack/react-query';
-import type {Job, JobStatus, CompanyResearch} from '../types';
-import CompanyResearchDisplay from './CompanyResearchDisplay';
-import {getCompanyResearch} from '../api';
+import type {Job, JobStatus} from '../../types';
+import CompanyResearchDisplay from '../CompanyResearchDisplay';
+import {getCompanyResearch} from '../../api';
 
 const ORDER: JobStatus[] = [
   'SAVED',

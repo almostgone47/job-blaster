@@ -1,12 +1,12 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Interview, InterviewType, InterviewStatus, Job} from '../types';
+import type {Interview, InterviewType, InterviewStatus, Job} from '../../types';
 import {
   createInterview,
   updateInterview,
   deleteInterview,
   getJobInterviews,
-} from '../api';
+} from '../../api';
 
 interface InterviewModalProps {
   open: boolean;

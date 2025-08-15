@@ -2,6 +2,7 @@ import {BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import SalaryAnalytics from './pages/SalaryAnalytics';
 import JobListView from './pages/JobListView';
+import Calendar from './pages/Calendar';
 import {UserPreferencesProvider} from './contexts/UserPreferences';
 
 export default function App() {
@@ -32,6 +33,12 @@ export default function App() {
                   >
                     💰 Salary Analytics
                   </Link>
+                  <Link
+                    to="/calendar"
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    📅 Calendar
+                  </Link>
                 </nav>
               </div>
               <div className="flex items-center space-x-4">
@@ -46,6 +53,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/job-list" element={<JobListView />} />
               <Route path="/salary-analytics" element={<SalaryAnalytics />} />
+              <Route path="/calendar" element={<Calendar />} />
             </Routes>
           </main>
         </div>

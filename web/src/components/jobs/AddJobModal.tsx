@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {parseUrl, createJob} from '../api';
+import {parseUrl, createJob} from '../../api';
 
 export default function AddJobModal({
   open,

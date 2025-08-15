@@ -1,8 +1,8 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Job, JobStatus, CompanyResearch} from '../types';
-import CompanyResearchModal from './CompanyResearchModal';
-import {getCompanyResearch} from '../api';
+import type {Job, JobStatus, CompanyResearch} from '../../types';
+import CompanyResearchModal from '../CompanyResearchModal';
+import {getCompanyResearch} from '../../api';
 
 const STATUS_OPTIONS: JobStatus[] = [
   'SAVED',
@@ -68,7 +68,7 @@ export default function EditJobModal({
     setLoading(true);
     try {
       // Import the updateJob function
-      const {updateJob} = await import('../api');
+      const {updateJob} = await import('../../api');
 
       // Parse tags from comma-separated string
       const tagsArray = tags

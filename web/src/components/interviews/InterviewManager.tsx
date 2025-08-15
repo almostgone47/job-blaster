@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Interview, Job} from '../types';
-import {listInterviews} from '../api';
+import type {Interview, Job} from '../../types';
+import {listInterviews} from '../../api';
 import InterviewModal from './InterviewModal';
 import InterviewCalendar from './InterviewCalendar';
 

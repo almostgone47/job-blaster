@@ -1,6 +1,6 @@
 import {useState} from 'react';
-import type {JobStatus} from '../types';
-import type {JobListFilters} from '../hooks/useJobListFilters';
+import type {JobStatus} from '../../types';
+import type {JobListFilters} from '../../hooks/useJobListFilters';
 
 const JOB_STATUS_OPTIONS: JobStatus[] = [
   'SAVED',
