@@ -1,9 +1,11 @@
 import {useQuery} from '@tanstack/react-query';
 import {listJobs, listApplications, listResumes} from '../api';
 import type {Job, Application, Resume, Interview, SalaryOffer} from '../types';
-import JobListStats from '../components/JobListStats';
-import JobListFilters from '../components/JobListFilters';
-import JobListTable from '../components/JobListTable';
+import {
+  JobListStats,
+  JobListFilters,
+  JobListTable,
+} from '../components/job-list';
 import {useJobListFilters} from '../hooks/useJobListFilters';
 
 export default function JobListView() {

@@ -1,8 +1,7 @@
 import {useState, useMemo} from 'react';
 import type {Job, Application, Interview, SalaryOffer} from '../types';
 import type {JobListFilters} from '../hooks/useJobListFilters';
-import EditJobModal from './EditJobModal';
-import ApplicationModal from './ApplicationModal';
+import {EditJobModal, ApplicationModal} from '../jobs';
 
 interface JobListTableProps {
   jobs: Job[];

@@ -2,16 +2,20 @@ import {useState, useMemo} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {listJobs, updateJob, listApplications, listResumes} from '../api';
 import type {Job, JobStatus, Application, Resume, Interview} from '../types';
-import AddJobModal from '../components/AddJobModal';
-import EditJobModal from '../components/EditJobModal';
-import ApplicationModal from '../components/ApplicationModal';
+import {
+  AddJobModal,
+  EditJobModal,
+  ApplicationModal,
+  JobCard,
+} from '../components/jobs';
 import ResumeModal from '../components/ResumeModal';
 import TemplateManager from '../components/TemplateManager';
-import InterviewManager from '../components/InterviewManager';
-import InterviewModal from '../components/InterviewModal';
-import InterviewNotifications from '../components/InterviewNotifications';
-import InterviewBanner from '../components/InterviewBanner';
-import JobCard from '../components/JobCard';
+import {
+  InterviewManager,
+  InterviewModal,
+  InterviewNotifications,
+  InterviewBanner,
+} from '../components/interviews';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
 import {
