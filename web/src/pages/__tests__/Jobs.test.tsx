@@ -7,6 +7,7 @@ import Jobs from '../Jobs';
 // Mock the API calls
 vi.mock('../../api', () => ({
   listJobs: vi.fn(() => Promise.resolve(mockJobs)),
+  listInterviews: vi.fn(() => Promise.resolve([])),
 }));
 
 // Mock the lazy-loaded components with better test IDs
@@ -240,7 +241,7 @@ describe('Jobs', () => {
 
     // Verify the bell has the correct styling for no urgent deadlines
     expect(bellButton).toHaveClass('border-gray-700', 'text-gray-500');
-    expect(bellButton).toHaveAttribute('title', 'No urgent deadlines');
+    expect(bellButton).toHaveAttribute('title', 'No urgent alerts');
   });
 
   it('shows View Interviews button', () => {

@@ -1,11 +1,17 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import type {Interview, Job} from '../../types';
 import {listInterviews} from '../../api';
 import InterviewModal from './InterviewModal';
 import InterviewCalendar from './InterviewCalendar';
 
-export default function InterviewManager() {
+interface InterviewManagerProps {
+  scrollToInterviewId?: string | null;
+}
+
+export default function InterviewManager({
+  scrollToInterviewId,
+}: InterviewManagerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(
     null,
@@ -18,6 +24,25 @@ export default function InterviewManager() {
     isLoading,
     error,
   } = useQuery({queryKey: ['interviews'], queryFn: listInterviews});
+
+  // Scroll to specific interview when scrollToInterviewId changes
+  useEffect(() => {
+    if (scrollToInterviewId) {
+      const interviewElement = document.querySelector(
+        `[data-interview-id="${scrollToInterviewId}"]`,
+      );
+      if (interviewElement) {
+        // Scroll the interview into view with smooth animation
+        interviewElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center',
+        });
+
+        // The highlight will be removed when scrollToInterviewId changes
+      }
+    }
+  }, [scrollToInterviewId]);
 
   const handleEdit = (interview: Interview) => {
     setEditingInterview(interview);
@@ -210,7 +235,12 @@ export default function InterviewManager() {
                   {interviews.slice(0, 3).map((interview) => (
                     <div
                       key={interview.id}
-                      className="p-3 rounded border border-gray-600 bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-3"
+                      data-interview-id={interview.id}
+                      className={`p-3 rounded border border-gray-600 bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-3 ${
+                        scrollToInterviewId === interview.id
+                          ? 'ring-2 ring-blue-400 ring-opacity-75 animate-pulse'
+                          : ''
+                      }`}
                     >
                       <div className="text-center min-w-[60px]">
                         <div className="text-lg font-bold text-blue-400">
@@ -303,7 +333,12 @@ export default function InterviewManager() {
                         {interviews.map((interview) => (
                           <div
                             key={interview.id}
-                            className="p-4 rounded border border-gray-600 bg-gray-800 hover:bg-gray-750 transition-colors relative"
+                            data-interview-id={interview.id}
+                            className={`p-4 rounded border border-gray-600 bg-gray-800 hover:bg-gray-750 transition-colors relative ${
+                              scrollToInterviewId === interview.id
+                                ? 'ring-2 ring-blue-400 ring-opacity-75 animate-pulse'
+                                : ''
+                            }`}
                           >
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l"></div>
                             <div className="flex items-start justify-between">

@@ -212,49 +212,53 @@ export default function JobCard({
         <CompanyResearchDisplay research={companyResearch} compact={true} />
       )}
 
-      <div className="mt-3 flex items-center gap-2 flex-wrap">
-        {!hasApplication && (
+      <div className="mt-3 flex flex-col gap-2">
+        {/* Top row: Action buttons */}
+        <div className="flex gap-2">
+          {!hasApplication && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTrackApplication(job);
+              }}
+              className="flex-1 rounded-md bg-purple-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-purple-700 transition-colors"
+            >
+              Track Application
+            </button>
+          )}
+
+          {hasApplication && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTrackApplication(job);
+              }}
+              className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-blue-700 transition-colors"
+            >
+              Application Details
+            </button>
+          )}
+
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onTrackApplication(job);
+              onScheduleInterview(job);
             }}
-            className="rounded-md bg-purple-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-purple-700 transition-colors"
+            className="flex-1 rounded-md bg-orange-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-orange-700 transition-colors"
           >
-            Track Application
+            📅 Schedule Interview
           </button>
-        )}
+        </div>
 
-        {hasApplication && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onTrackApplication(job);
-            }}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-blue-700 transition-colors"
-          >
-            Application Details
-          </button>
-        )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onScheduleInterview(job);
-          }}
-          className="rounded-md bg-orange-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-orange-700 transition-colors"
-        >
-          📅 Schedule Interview
-        </button>
-
-        <div className="ml-auto flex gap-1">
+        {/* Bottom row: Navigation buttons */}
+        <div className="flex gap-2">
           {left && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onMove(job.id, left);
               }}
-              className="rounded border border-gray-500 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+              className="flex-1 rounded border border-gray-500 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
               title={`Move to ${left}`}
             >
               ← {left}
@@ -273,7 +277,7 @@ export default function JobCard({
                   onMove(job.id, right);
                 }
               }}
-              className="rounded bg-green-600 px-2 py-1 text-xs text-white font-medium hover:bg-green-700 transition-colors"
+              className="flex-1 rounded bg-green-600 px-2 py-1 text-xs text-white font-medium hover:bg-green-700 transition-colors"
               title={`Move to ${right}`}
             >
               {right} →

@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useState, useMemo, useEffect} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {updateJob, listJobs} from '../../api';
 import type {Job, JobStatus, Resume, Interview} from '../../types';
@@ -38,6 +38,7 @@ interface KanbanViewProps {
   onAddClose: () => void;
   interviewManagerOpen: boolean;
   setInterviewManagerOpen: (open: boolean) => void;
+  scrollToJobId?: string | null; // New prop for scrolling to specific job
 }
 
 export default function KanbanView({
@@ -45,6 +46,7 @@ export default function KanbanView({
   onAddClose,
   interviewManagerOpen,
   setInterviewManagerOpen,
+  scrollToJobId,
 }: KanbanViewProps) {
   const qc = useQueryClient();
   const {
@@ -66,6 +68,30 @@ export default function KanbanView({
     useState<Job | null>(null);
   const [snoozedDeadlines, setSnoozedDeadlines] =
     usePersistentSet<string>('snoozedDeadlines');
+
+  // Scroll to specific job when scrollToJobId changes
+  useEffect(() => {
+    if (scrollToJobId) {
+      const jobElement = document.querySelector(
+        `[data-job-id="${scrollToJobId}"]`,
+      );
+      if (jobElement) {
+        // Scroll the job into view with smooth animation
+        jobElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center',
+        });
+
+        // Remove the highlight after a few seconds
+        const timer = setTimeout(() => {
+          // The highlight will be removed when scrollToJobId changes
+        }, 3000);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [scrollToJobId]);
 
   // Group jobs by status for quick render
   const jobsByStatus = useMemo(() => {
@@ -237,6 +263,12 @@ export default function KanbanView({
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
+                                data-job-id={job.id}
+                                className={
+                                  scrollToJobId === job.id
+                                    ? 'ring-2 ring-blue-400 ring-opacity-75 animate-pulse'
+                                    : ''
+                                }
                               >
                                 <JobCard
                                   job={job}
@@ -307,8 +339,6 @@ export default function KanbanView({
         }}
       />
 
-
-
       {selectedJobForInterview && (
         <InterviewModal
           open={interviewModalOpen}
@@ -340,7 +370,7 @@ export default function KanbanView({
                 ✕
               </button>
             </div>
-            <InterviewManager />
+            <InterviewManager scrollToInterviewId={scrollToJobId} />
           </div>
         </div>
       )}
