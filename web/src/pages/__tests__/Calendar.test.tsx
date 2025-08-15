@@ -108,6 +108,7 @@ const mockInterviews = [
     title: 'Phone Screen',
     type: 'PHONE_SCREEN' as InterviewType,
     scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // For calendar compatibility
     duration: 30,
     status: 'SCHEDULED' as InterviewStatus,
     createdAt: '2024-01-01T00:00:00Z',

@@ -54,6 +54,8 @@ export interface Application {
   createdAt: string;
   updatedAt: string;
   job: Job;
+  jobTitle?: string; // For calendar compatibility
+  company?: string; // For calendar compatibility
 }
 
 export interface CompanyResearch {
@@ -110,6 +112,8 @@ export interface Interview {
   title: string;
   type: InterviewType;
   scheduledAt: string;
+  date: string; // For calendar compatibility
+  time?: string | null; // For calendar compatibility
   duration: number;
   location?: string | null;
   participants?: string | null;
@@ -128,6 +132,17 @@ export interface Interview {
     id: string;
     status: string;
   } | null;
+}
+
+export interface CalendarEvent {
+  id: string;
+  type: 'interview' | 'deadline' | 'follow-up';
+  title: string;
+  date: Date;
+  time?: string | null;
+  company: string;
+  status?: string;
+  data: Interview | Job | Application;
 }
 
 export const SalaryType = {

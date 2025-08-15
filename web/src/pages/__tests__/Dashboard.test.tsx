@@ -86,6 +86,7 @@ const mockInterviews = [
     title: 'Phone Screen',
     type: 'PHONE_SCREEN' as InterviewType,
     scheduledAt: '2024-01-15T10:00:00Z',
+    date: '2024-01-15T10:00:00Z', // For calendar compatibility
     duration: 30,
     status: 'SCHEDULED' as InterviewStatus,
     createdAt: '2024-01-01T00:00:00Z',

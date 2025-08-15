@@ -1,8 +1,6 @@
 import {BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
+import Jobs from './pages/Jobs';
 import SalaryAnalytics from './pages/SalaryAnalytics';
-import JobListView from './pages/JobListView';
-import Calendar from './pages/Calendar';
 import {UserPreferencesProvider} from './contexts/UserPreferences';
 
 export default function App() {
@@ -19,25 +17,13 @@ export default function App() {
                     to="/"
                     className="text-gray-300 hover:text-white transition-colors"
                   >
-                    📋 Kanban Board
-                  </Link>
-                  <Link
-                    to="/job-list"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    📊 Job List
+                    🚀 Jobs
                   </Link>
                   <Link
                     to="/salary-analytics"
                     className="text-gray-300 hover:text-white transition-colors"
                   >
                     💰 Salary Analytics
-                  </Link>
-                  <Link
-                    to="/calendar"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    📅 Calendar
                   </Link>
                 </nav>
               </div>
@@ -50,10 +36,8 @@ export default function App() {
           </header>
           <main className="mx-auto max-w-8xl px-4 py-6">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/job-list" element={<JobListView />} />
+              <Route path="/" element={<Jobs />} />
               <Route path="/salary-analytics" element={<SalaryAnalytics />} />
-              <Route path="/calendar" element={<Calendar />} />
             </Routes>
           </main>
         </div>

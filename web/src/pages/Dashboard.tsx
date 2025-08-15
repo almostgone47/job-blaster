@@ -299,30 +299,9 @@ export default function Dashboard() {
           >
             Add Job
           </button>
-          <button
-            onClick={() => {
-              setSelectedResume(null);
-              setResumeModalOpen(true);
-            }}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Resumes
-          </button>
-          <button
-            onClick={() => setTemplateManagerOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Templates
-          </button>
-          <button
-            onClick={() => setInterviewManagerOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            📅 View Interviews
-          </button>
         </div>
         <div className="flex gap-2">
-          {/* Deadline Alerts Bell */}
+          {/* Deadline Alerts Bell - Always visible */}
           {(() => {
             const now = new Date();
             const urgentDeadlines = jobs.filter((job) => {
@@ -334,21 +313,60 @@ export default function Dashboard() {
               return diffDays <= 3; // Show count for overdue, today, tomorrow, and this week
             });
 
-            if (urgentDeadlines.length === 0) return null;
+            const hasAlerts = urgentDeadlines.length > 0;
 
             return (
               <button
                 onClick={() => setDeadlineAlertsOpen(true)}
-                className="relative rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700 transition-colors"
-                title="View deadline alerts"
+                className={`relative rounded border px-3 py-1.5 text-sm transition-colors ${
+                  hasAlerts
+                    ? 'border-gray-600 text-white hover:bg-gray-700'
+                    : 'border-gray-700 text-gray-500 hover:bg-gray-800 hover:text-gray-400'
+                }`}
+                title={
+                  hasAlerts ? 'View deadline alerts' : 'No urgent deadlines'
+                }
               >
                 🔔
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                <span
+                  className={`absolute -top-2 -right-2 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold ${
+                    hasAlerts
+                      ? 'bg-red-500 text-white'
+                      : 'bg-gray-600 text-gray-400'
+                  }`}
+                >
                   {urgentDeadlines.length}
                 </span>
               </button>
             );
           })()}
+
+          {/* Manage Resumes Button */}
+          <button
+            onClick={() => {
+              setSelectedResume(null);
+              setResumeModalOpen(true);
+            }}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Resumes
+          </button>
+
+          {/* Manage Templates Button */}
+          <button
+            onClick={() => setTemplateManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Templates
+          </button>
+
+          {/* View Interviews Button */}
+          <button
+            onClick={() => setInterviewManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            📅 View Interviews
+          </button>
 
           {snoozedDeadlines.size > 0 && (
             <button
@@ -362,6 +380,7 @@ export default function Dashboard() {
               {snoozedDeadlines.size !== 1 ? 's' : ''}
             </button>
           )}
+
           <button
             onClick={handleExportCSV}
             className="rounded border border-gray-600 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-300 hover:bg-gray-700 transition-colors"
