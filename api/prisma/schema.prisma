@@ -19,6 +19,7 @@ model User {
   salaryHistory SalaryHistory[]
   salaryOffers  SalaryOffer[]
   templates     Template[]
+  companyResearch CompanyResearch[]
 }
 
 model Resume {
@@ -171,6 +172,23 @@ model SalaryHistory {
 
   @@index([userId, effectiveDate])
   @@index([jobId])
+}
+
+model CompanyResearch {
+  id          String   @id @default(cuid())
+  userId      String
+  companyName String   // Normalized company name
+  insights    String   // Research notes, culture, benefits, etc.
+  rating      Int?     // 1-5 rating
+  pros        String[] // Array of pros
+  cons        String[] // Array of cons
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, companyName])
+  @@index([userId, companyName])
 }
 
 

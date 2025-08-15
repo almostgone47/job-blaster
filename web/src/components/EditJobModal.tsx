@@ -1,5 +1,8 @@
 import {useState, useEffect} from 'react';
-import type {Job, JobStatus} from '../types';
+import {useQuery} from '@tanstack/react-query';
+import type {Job, JobStatus, CompanyResearch} from '../types';
+import CompanyResearchModal from './CompanyResearchModal';
+import {getCompanyResearch} from '../api';
 
 const STATUS_OPTIONS: JobStatus[] = [
   'SAVED',
@@ -29,6 +32,16 @@ export default function EditJobModal({
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [companyResearchOpen, setCompanyResearchOpen] = useState(false);
+  const [companyResearch, setCompanyResearch] =
+    useState<CompanyResearch | null>(null);
+
+  // Fetch company research when job changes
+  const {data: companyResearchData} = useQuery({
+    queryKey: ['company-research', job?.company],
+    queryFn: () => (job?.company ? getCompanyResearch(job.company) : null),
+    enabled: !!job?.company,
+  });
 
   // Update form when job changes
   useEffect(() => {
@@ -43,8 +56,11 @@ export default function EditJobModal({
       setDeadline(
         job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
       );
+
+      // Set company research data
+      setCompanyResearch(companyResearchData || null);
     }
-  }, [job]);
+  }, [job, companyResearchData]);
 
   async function handleSave() {
     if (!job || !title || !company) return;
@@ -201,6 +217,17 @@ export default function EditJobModal({
             />
           </div>
 
+          {/* Company Research Button */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => setCompanyResearchOpen(true)}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            >
+              🔍 Company Research
+            </button>
+          </div>
+
           <div className="flex justify-end gap-2">
             <button
               onClick={onClose}
@@ -218,6 +245,18 @@ export default function EditJobModal({
           </div>
         </div>
       </div>
+
+      {/* Company Research Modal */}
+      <CompanyResearchModal
+        companyName={job?.company || ''}
+        research={companyResearch}
+        open={companyResearchOpen}
+        onClose={() => setCompanyResearchOpen(false)}
+        onSaved={() => {
+          // Refresh company research data by invalidating the query
+          window.location.reload(); // Simple refresh for now
+        }}
+      />
     </div>
   );
 }

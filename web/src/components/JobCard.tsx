@@ -1,4 +1,7 @@
-import type {Job, JobStatus} from '../types';
+import {useQuery} from '@tanstack/react-query';
+import type {Job, JobStatus, CompanyResearch} from '../types';
+import CompanyResearchDisplay from './CompanyResearchDisplay';
+import {getCompanyResearch} from '../api';
 
 const ORDER: JobStatus[] = [
   'SAVED',
@@ -76,6 +79,12 @@ export default function JobCard({
   isSnoozed?: boolean;
   onUnsnooze?: () => void;
 }) {
+  // Fetch company research for this job
+  const {data: companyResearch} = useQuery({
+    queryKey: ['company-research', job.company],
+    queryFn: () => getCompanyResearch(job.company),
+    enabled: !!job.company,
+  });
   const right = nextStatus(job.status);
   const left = prevStatus(job.status);
 
@@ -196,6 +205,11 @@ export default function JobCard({
             </div>
           )}
         </div>
+      )}
+
+      {/* Company Research Display */}
+      {companyResearch && (
+        <CompanyResearchDisplay research={companyResearch} compact={true} />
       )}
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">

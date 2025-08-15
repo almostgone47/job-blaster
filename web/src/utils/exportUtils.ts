@@ -1,9 +1,11 @@
 import type {SalaryStats, CompanySalaryData} from '../lib/salaryAnalytics';
+import type {CompanyResearch} from '../types';
 
 export interface ExportData {
   stats: SalaryStats;
   companies: CompanySalaryData[];
   offers: any[];
+  companyResearch?: CompanyResearch[];
 }
 
 export function generateMarkdown(data: ExportData): string {
@@ -62,6 +64,32 @@ export function generateMarkdown(data: ExportData): string {
       markdown += `| ${title} | ${company} | ${location} | ${amount} |\n`;
     });
     markdown += `\n`;
+  }
+
+  // Company Research (if available)
+  if (data.companyResearch && data.companyResearch.length > 0) {
+    markdown += `## 🔍 Company Research\n\n`;
+
+    data.companyResearch.forEach((research) => {
+      markdown += `### ${research.companyName}\n`;
+      if (research.rating) {
+        markdown += `**Rating:** ${research.rating}/5\n\n`;
+      }
+      if (research.insights) {
+        markdown += `**Insights:** ${research.insights}\n\n`;
+      }
+      if (research.pros.length > 0) {
+        markdown += `**Pros:**\n`;
+        research.pros.forEach((pro) => (markdown += `- ${pro}\n`));
+        markdown += `\n`;
+      }
+      if (research.cons.length > 0) {
+        markdown += `**Cons:**\n`;
+        research.cons.forEach((con) => (markdown += `- ${con}\n`));
+        markdown += `\n`;
+      }
+      markdown += `---\n\n`;
+    });
   }
 
   // Insights
@@ -136,6 +164,19 @@ export function generateCSV(data: ExportData): string {
 
     csv += `Recent Offers,${title},${company},${location},${amount}\n`;
   });
+
+  // Company Research (if available)
+  if (data.companyResearch && data.companyResearch.length > 0) {
+    csv += '\nCompany Research,Company,Rating,Insights,Pros,Cons\n';
+    data.companyResearch.forEach((research) => {
+      const pros = research.pros.join('; ') || 'N/A';
+      const cons = research.cons.join('; ') || 'N/A';
+      const rating = research.rating || 'N/A';
+      const insights = research.insights || 'N/A';
+
+      csv += `Company Research,${research.companyName},${rating},${insights},${pros},${cons}\n`;
+    });
+  }
 
   return csv;
 }

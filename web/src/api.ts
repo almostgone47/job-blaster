@@ -82,6 +82,56 @@ export async function deleteResume(id: string) {
   if (!r.ok) throw new Error('Failed to delete resume');
 }
 
+// Company Research API functions
+export async function getCompanyResearch(companyName?: string) {
+  if (companyName) {
+    const r = await fetch(
+      `${API}/company-research/${encodeURIComponent(companyName)}`,
+      {
+        headers,
+      },
+    );
+    if (!r.ok) {
+      if (r.status === 404) return null;
+      throw new Error('Failed to fetch company research');
+    }
+    return r.json();
+  } else {
+    const r = await fetch(`${API}/company-research`, {
+      headers,
+    });
+    if (!r.ok) throw new Error('Failed to fetch company research');
+    return r.json();
+  }
+}
+
+export async function upsertCompanyResearch(data: {
+  companyName: string;
+  insights?: string;
+  rating?: number;
+  pros?: string[];
+  cons?: string[];
+}) {
+  const r = await fetch(`${API}/company-research`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Failed to save company research');
+  return r.json();
+}
+
+export async function deleteCompanyResearch(companyName: string) {
+  const r = await fetch(
+    `${API}/company-research/${encodeURIComponent(companyName)}`,
+    {
+      method: 'DELETE',
+      headers,
+    },
+  );
+  if (!r.ok) throw new Error('Failed to delete company research');
+}
+
 export async function createJob(payload: Partial<Job>) {
   const r = await fetch(`${API}/jobs`, {
     method: 'POST',

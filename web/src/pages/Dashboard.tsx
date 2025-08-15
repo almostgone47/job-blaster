@@ -11,7 +11,6 @@ import InterviewManager from '../components/InterviewManager';
 import InterviewModal from '../components/InterviewModal';
 import InterviewNotifications from '../components/InterviewNotifications';
 import InterviewBanner from '../components/InterviewBanner';
-import SalaryAnalytics from '../components/SalaryAnalytics';
 import JobCard from '../components/JobCard';
 import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd';
 import type {DropResult} from '@hello-pangea/dnd';
@@ -68,11 +67,11 @@ export default function Dashboard() {
   const [selectedJobForInterview, setSelectedJobForInterview] =
     useState<Job | null>(null);
   const [interviewManagerOpen, setInterviewManagerOpen] = useState(false);
-  const [salaryAnalyticsOpen, setSalaryAnalyticsOpen] = useState(false);
   const [deadlineAlertsOpen, setDeadlineAlertsOpen] = usePersistentBoolean(
     'deadlineAlertsOpen',
     false,
   );
+  const [snoozedJobsModalOpen, setSnoozedJobsModalOpen] = useState(false);
   const [snoozedDeadlines, setSnoozedDeadlines] =
     usePersistentSet<string>('snoozedDeadlines');
 
@@ -290,19 +289,33 @@ export default function Dashboard() {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">Dashboard</h2>
           <button
             onClick={() => setAddOpen(true)}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white"
+            className="rounded bg-gray-900 border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-800 transition-colors"
           >
             Add Job
           </button>
-          {snoozedDeadlines.size > 0 && (
-            <div className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-              {snoozedDeadlines.size} snoozed alert
-              {snoozedDeadlines.size !== 1 ? 's' : ''}
-            </div>
-          )}
+          <button
+            onClick={() => {
+              setSelectedResume(null);
+              setResumeModalOpen(true);
+            }}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Resumes
+          </button>
+          <button
+            onClick={() => setTemplateManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            Manage Templates
+          </button>
+          <button
+            onClick={() => setInterviewManagerOpen(true)}
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+          >
+            📅 View Interviews
+          </button>
         </div>
         <div className="flex gap-2">
           {/* Deadline Alerts Bell */}
@@ -333,36 +346,21 @@ export default function Dashboard() {
             );
           })()}
 
-          <button
-            onClick={() => {
-              setSelectedResume(null);
-              setResumeModalOpen(true);
-            }}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Resumes
-          </button>
-          <button
-            onClick={() => setTemplateManagerOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Templates
-          </button>
-          <button
-            onClick={() => setInterviewManagerOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            📅 View Interviews
-          </button>
-          <button
-            onClick={() => setSalaryAnalyticsOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            💰 Salary Analytics
-          </button>
+          {snoozedDeadlines.size > 0 && (
+            <button
+              onClick={() => setSnoozedJobsModalOpen(true)}
+              className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded flex items-center justify-center hover:bg-gray-700 hover:text-gray-300 transition-colors cursor-pointer"
+              title={`View ${snoozedDeadlines.size} snoozed deadline alert${
+                snoozedDeadlines.size !== 1 ? 's' : ''
+              }`}
+            >
+              {snoozedDeadlines.size} snoozed alert
+              {snoozedDeadlines.size !== 1 ? 's' : ''}
+            </button>
+          )}
           <button
             onClick={handleExportCSV}
-            className="rounded border px-3 py-1.5 text-sm text-white"
+            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-300 hover:bg-gray-700 transition-colors"
             disabled={exporting}
           >
             {exporting ? 'Exporting...' : 'Export CSV'}
@@ -533,25 +531,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {salaryAnalyticsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-6xl max-h-[90vh] rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">
-                💰 Salary Analytics
-              </h2>
-              <button
-                onClick={() => setSalaryAnalyticsOpen(false)}
-                className="text-gray-400 hover:text-gray-300"
-              >
-                ✕
-              </button>
-            </div>
-            <SalaryAnalytics />
-          </div>
-        </div>
-      )}
-
       {interviewModalOpen && selectedJobForInterview && (
         <InterviewModal
           open={interviewModalOpen}
@@ -678,6 +657,96 @@ export default function Dashboard() {
           </div>
         );
       })()}
+
+      {/* Snoozed Jobs Modal */}
+      {snoozedJobsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="w-full max-w-2xl rounded-xl bg-gray-800 p-6 shadow-xl border border-gray-600">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                🔕 Snoozed Deadline Alerts
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearSnoozedDeadlines}
+                  className="text-xs text-gray-400 hover:text-gray-300 px-2 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors"
+                  title="Clear all snoozed alerts"
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={() => setSnoozedJobsModalOpen(false)}
+                  className="text-sm text-gray-400 hover:text-gray-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {jobs
+                .filter((job) => job.deadline && snoozedDeadlines.has(job.id))
+                .map((job) => {
+                  const deadline = new Date(job.deadline!);
+                  const now = new Date();
+                  const diffDays = Math.ceil(
+                    (deadline.getTime() - now.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  );
+                  const isOverdue = diffDays < 0;
+
+                  return (
+                    <div
+                      key={job.id}
+                      className={`p-3 rounded border text-sm cursor-pointer hover:bg-gray-700/50 transition-colors ${
+                        isOverdue
+                          ? 'bg-red-900/20 border-red-600/50 text-red-300'
+                          : 'bg-gray-800/50 border-gray-600/50 text-gray-300'
+                      }`}
+                      onClick={() => {
+                        setEditJob(job);
+                        setSnoozedJobsModalOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium">{job.title}</div>
+                          <div className="text-gray-400">{job.company}</div>
+                          <div className="mt-1">
+                            {isOverdue
+                              ? `Overdue by ${Math.abs(diffDays)} day${
+                                  Math.abs(diffDays) !== 1 ? 's' : ''
+                                }`
+                              : diffDays === 0
+                              ? 'Due today!'
+                              : diffDays === 1
+                              ? 'Due tomorrow'
+                              : `Due in ${diffDays} days`}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <div className="text-xs text-gray-400">
+                            {deadline.toLocaleDateString()}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              unsnoozeJob(job.id);
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+                            title="Unsnooze this alert"
+                          >
+                            Unsnooze 🔔
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

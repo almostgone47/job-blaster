@@ -7,12 +7,15 @@ import {ErrorBoundary} from '../components/ErrorBoundary';
 import {CollectMoreData} from '../components/analytics/CollectMoreData';
 import {useFormatting} from '../contexts/UserPreferences';
 import {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
 import {PreferencesSettings} from '../components/PreferencesSettings';
 import {
   generateMarkdown,
   generateCSV,
   downloadFile,
 } from '../utils/exportUtils';
+import {getCompanyResearch} from '../api';
+import type {CompanyResearch} from '../types';
 
 export default function SalaryAnalytics() {
   // Use consolidated hook for better performance - only ONE API call!
@@ -29,6 +32,13 @@ export default function SalaryAnalytics() {
   const timelineData = data?.timeline;
   const remoteSplitData = data?.remoteSplit;
   const offers = data?.offers;
+
+  // Fetch company research data for companies in the leaderboard
+  const {data: companyResearch} = useQuery({
+    queryKey: ['company-research'],
+    queryFn: () => getCompanyResearch(),
+    enabled: !!companies && companies.length > 0,
+  });
 
   if (isLoading) {
     return (
@@ -112,7 +122,7 @@ export default function SalaryAnalytics() {
 
     setExportingMarkdown(true);
     try {
-      const exportData = {stats, companies, offers};
+      const exportData = {stats, companies, offers, companyResearch};
       const markdown = generateMarkdown(exportData);
       const filename = `salary-analytics-${
         new Date().toISOString().split('T')[0]
@@ -129,7 +139,7 @@ export default function SalaryAnalytics() {
 
     setExportingCSV(true);
     try {
-      const exportData = {stats, companies, offers};
+      const exportData = {stats, companies, offers, companyResearch};
       const csv = generateCSV(exportData);
       const filename = `salary-analytics-${
         new Date().toISOString().split('T')[0]
@@ -156,10 +166,7 @@ export default function SalaryAnalytics() {
             </button>
           </div>
 
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Salary Analytics
-          </h1>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-300 mb-6">
             Turn your job data into negotiation power.
           </p>
 
@@ -300,6 +307,9 @@ export default function SalaryAnalytics() {
                     <th className="text-center p-3 text-gray-300 font-medium">
                       Range
                     </th>
+                    <th className="text-center p-3 text-gray-300 font-medium">
+                      Research
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -320,6 +330,16 @@ export default function SalaryAnalytics() {
                       <td className="p-3 text-center text-gray-300">
                         {formatSalary(company.minSalary)}–
                         {formatSalary(company.maxSalary)}
+                      </td>
+                      <td className="p-3 text-center">
+                        {companyResearch?.find(
+                          (r: CompanyResearch) =>
+                            r.companyName === company.company,
+                        ) ? (
+                          <span className="text-green-400 text-sm">🔍</span>
+                        ) : (
+                          <span className="text-gray-500 text-sm">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

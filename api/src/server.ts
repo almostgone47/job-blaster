@@ -9,6 +9,7 @@ import resumes from './routes/resumes';
 import templates from './routes/templates';
 import interviews from './routes/interviews';
 import salary from './routes/salary';
+import companyResearch from './routes/company-research';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use(resumes);
 app.use(templates);
 app.use(interviews);
 app.use(salary);
+app.use(companyResearch);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);

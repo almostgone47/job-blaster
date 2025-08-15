@@ -47,6 +47,18 @@ export interface Application {
   job: Job;
 }
 
+export interface CompanyResearch {
+  id: string;
+  userId: string;
+  companyName: string;
+  insights: string;
+  rating?: number | null;
+  pros: string[];
+  cons: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Resume {
   id: string;
   userId: string;
