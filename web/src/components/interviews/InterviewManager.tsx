@@ -17,7 +17,6 @@ export default function InterviewManager({
   );
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-
   const {
     data: interviews = [],
     isLoading,
@@ -267,8 +266,7 @@ export default function InterviewManager({
                             </div>
 
                             <div className="text-sm text-gray-400 mb-3">
-                              🕐{' '}
-                              {formatInterviewTime(interview.scheduledAt)} •{' '}
+                              🕐 {formatInterviewTime(interview.scheduledAt)} •{' '}
                               {interview.duration} minutes
                               {interview.location &&
                                 ` • 📍 ${interview.location}`}

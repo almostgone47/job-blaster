@@ -2,6 +2,7 @@ import {useState, useMemo} from 'react';
 import type {Job, Application, Interview, SalaryOffer} from '../../types';
 import type {JobListFilters} from '../../hooks/useJobListFilters';
 import {EditJobModal, ApplicationModal} from '../jobs';
+import InterviewModal from '../interviews/InterviewModal';
 
 interface JobListTableProps {
   jobs: Job[];
@@ -12,18 +13,20 @@ interface JobListTableProps {
   isLoading?: boolean;
 }
 
-type SortField =
-  | 'company'
-  | 'title'
-  | 'status'
-  | 'appliedAt'
-  | 'lastActivityAt';
+type SortField = 'alerts' | 'company' | 'title' | 'status' | 'appliedAt';
 type SortDirection = 'asc' | 'desc';
 
 interface JobWithDetails extends Job {
   application?: Application;
   nextInterview?: Interview;
   salaryOffer?: SalaryOffer;
+  alerts: {
+    hasDeadline: boolean;
+    hasFollowUp: boolean;
+    hasInterview: boolean;
+    isOverdue: boolean;
+    priority: number;
+  };
 }
 
 export default function JobListTable({
@@ -34,13 +37,17 @@ export default function JobListTable({
   filters,
   isLoading = false,
 }: JobListTableProps) {
-  const [sortField, setSortField] = useState<SortField>('lastActivityAt');
+  const [sortField, setSortField] = useState<SortField>('alerts');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [editJob, setEditJob] = useState<Job | null>(null);
   const [applicationModalOpen, setApplicationModalOpen] = useState(false);
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(
+    null,
+  );
 
-  // Enrich jobs with related data
+  // Enrich jobs with related data and alerts
   const enrichedJobs = useMemo((): JobWithDetails[] => {
     return jobs.map((job) => {
       const application = applications.find((app) => app.jobId === job.id);
@@ -53,11 +60,35 @@ export default function JobListTable({
         )[0];
       const salaryOffer = salaryOffers.find((offer) => offer.jobId === job.id);
 
+      // Calculate alerts and priority
+      const now = new Date();
+      const hasDeadline = !!job.deadline;
+      const hasFollowUp = application?.nextAction
+        ? new Date(application.nextAction) <= now
+        : false;
+      const hasInterview = !!nextInterview;
+      const isOverdue =
+        hasDeadline && job.deadline ? new Date(job.deadline) < now : false;
+
+      // Priority: 0 = no alerts, higher = more urgent
+      let priority = 0;
+      if (isOverdue) priority += 100;
+      if (hasFollowUp) priority += 50;
+      if (hasDeadline && !isOverdue) priority += 25;
+      if (hasInterview) priority += 10;
+
       return {
         ...job,
         application,
         nextInterview,
         salaryOffer,
+        alerts: {
+          hasDeadline,
+          hasFollowUp,
+          hasInterview,
+          isOverdue,
+          priority,
+        },
       };
     });
   }, [jobs, applications, interviews, salaryOffers]);
@@ -139,9 +170,13 @@ export default function JobListTable({
   // Apply sorting
   const sortedJobs = useMemo(() => {
     return [...filteredJobs].sort((a, b) => {
-      let aValue: string | Date, bValue: string | Date;
+      let aValue: string | Date | number, bValue: string | Date | number;
 
       switch (sortField) {
+        case 'alerts':
+          aValue = a.alerts.priority;
+          bValue = b.alerts.priority;
+          break;
         case 'company':
           aValue = a.company.toLowerCase();
           bValue = b.company.toLowerCase();
@@ -158,10 +193,7 @@ export default function JobListTable({
           aValue = new Date(a.application?.appliedAt || a.createdAt);
           bValue = new Date(b.application?.appliedAt || b.createdAt);
           break;
-        case 'lastActivityAt':
-          aValue = new Date(a.lastActivityAt);
-          bValue = new Date(b.lastActivityAt);
-          break;
+
         default:
           return 0;
       }
@@ -185,6 +217,14 @@ export default function JobListTable({
     return new Date(dateString).toLocaleDateString();
   };
 
+  const getDaysUntil = (dateString: string) => {
+    const now = new Date();
+    const targetDate = new Date(dateString);
+    const diffTime = targetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const formatSalary = (min?: number | null, max?: number | null) => {
     if (!min && !max) return '';
     if (min && max)
@@ -203,6 +243,54 @@ export default function JobListTable({
       REJECTED: 'bg-red-500',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-500';
+  };
+
+  const getStatusIcon = (status: string) => {
+    const icons = {
+      SAVED: '💾',
+      APPLIED: '📝',
+      INTERVIEW: '🎯',
+      OFFER: '💰',
+      REJECTED: '❌',
+    };
+    return icons[status as keyof typeof icons] || '❓';
+  };
+
+  const getAlertIcon = (alerts: JobWithDetails['alerts']) => {
+    if (alerts.isOverdue) return '🔴';
+    if (alerts.hasFollowUp) return '🟡';
+    if (alerts.hasDeadline) return '🟠';
+    if (alerts.hasInterview) return '🔵';
+    return '⚪';
+  };
+
+  const getAlertColor = (alerts: JobWithDetails['alerts']) => {
+    if (alerts.isOverdue) return 'text-red-400';
+    if (alerts.hasFollowUp) return 'text-yellow-400';
+    if (alerts.hasDeadline) return 'text-orange-400';
+    if (alerts.hasInterview) return 'text-blue-400';
+    return 'text-gray-400';
+  };
+
+  const getAlertTooltip = (alerts: JobWithDetails['alerts']) => {
+    const messages = [];
+    if (alerts.isOverdue) messages.push('Deadline overdue');
+    if (alerts.hasFollowUp) messages.push('Follow-up due');
+    if (alerts.hasDeadline && !alerts.isOverdue)
+      messages.push('Deadline approaching');
+    if (alerts.hasInterview) messages.push('Interview scheduled');
+    return messages.length > 0 ? messages.join(', ') : 'No alerts';
+  };
+
+  const handleJobClick = (job: Job) => {
+    setSelectedJob(job);
+    setEditJob(job);
+  };
+
+  const handleInterviewClick = (job: Job) => {
+    setSelectedJob(job);
+    setSelectedInterview(null);
+    setInterviewModalOpen(true);
   };
 
   if (isLoading) {
@@ -241,10 +329,72 @@ export default function JobListTable({
   return (
     <>
       <div className="bg-gray-800 border border-gray-600 rounded-lg overflow-hidden">
+        {/* Alerts Summary */}
+        <div className="bg-gray-700 px-4 py-3 border-b border-gray-600">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300">Alerts Summary:</span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <span className="text-red-400">🔴</span>
+                  <span className="text-gray-300">
+                    {sortedJobs.filter((job) => job.alerts.isOverdue).length}{' '}
+                    Overdue
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-yellow-400">🟡</span>
+                  <span className="text-gray-300">
+                    {sortedJobs.filter((job) => job.alerts.hasFollowUp).length}{' '}
+                    Follow-ups
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-orange-400">🟠</span>
+                  <span className="text-gray-300">
+                    {
+                      sortedJobs.filter(
+                        (job) =>
+                          job.alerts.hasDeadline && !job.alerts.isOverdue,
+                      ).length
+                    }{' '}
+                    Deadlines
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-blue-400">🔵</span>
+                  <span className="text-gray-300">
+                    {sortedJobs.filter((job) => job.alerts.hasInterview).length}{' '}
+                    Interviews
+                  </span>
+                </span>
+              </div>
+            </div>
+            <div className="text-gray-400">
+              Total:{' '}
+              {sortedJobs.filter((job) => job.alerts.priority > 0).length} jobs
+              with alerts
+            </div>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-700">
               <tr>
+                <th
+                  className="px-2 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
+                  onClick={() => handleSort('alerts')}
+                  title="Click to sort by alert priority"
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>🚨</span>
+                    {sortField === 'alerts' && (
+                      <span className="ml-1">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
                 <th
                   className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
                   onClick={() => handleSort('company')}
@@ -290,7 +440,7 @@ export default function JobListTable({
                   )}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Next Interview
+                  Next Important Date
                 </th>
                 {salaryOffers.length > 0 && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -303,19 +453,9 @@ export default function JobListTable({
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Salary
                 </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
-                  onClick={() => handleSort('lastActivityAt')}
-                >
-                  Last Activity
-                  {sortField === 'lastActivityAt' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? '↑' : '↓'}
-                    </span>
-                  )}
-                </th>
+
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Actions
+                  Notes
                 </th>
               </tr>
             </thead>
@@ -323,60 +463,215 @@ export default function JobListTable({
               {sortedJobs.map((job) => (
                 <tr
                   key={job.id}
-                  className="hover:bg-gray-700 transition-colors"
+                  className={`hover:bg-gray-700 transition-colors cursor-pointer ${
+                    job.alerts.priority > 0
+                      ? 'border-l-4 border-l-red-500 bg-red-900/10'
+                      : ''
+                  }`}
+                  onClick={() => handleJobClick(job)}
                 >
+                  <td className="px-2 py-3">
+                    <div
+                      className="flex items-center justify-center"
+                      title={getAlertTooltip(job.alerts)}
+                    >
+                      <span className={`text-lg ${getAlertColor(job.alerts)}`}>
+                        {getAlertIcon(job.alerts)}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       {job.faviconUrl && (
                         <img
                           src={job.faviconUrl}
                           alt=""
-                          className="w-4 h-4 mr-2"
+                          className="w-5 h-5 rounded"
                         />
                       )}
-                      <span className="text-white">{job.company}</span>
+                      <div className="flex flex-col">
+                        <span className="text-white font-medium">
+                          {job.company}
+                        </span>
+                        {job.source && (
+                          <span className="text-xs text-gray-400">
+                            via {job.source}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="text-white">{job.title}</div>
-                    {job.source && (
-                      <div className="text-xs text-gray-400">{job.source}</div>
-                    )}
+                    <div className="space-y-1">
+                      <div className="text-white font-medium">{job.title}</div>
+                      {job.tags && job.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {job.tags.slice(0, 3).map((tag, index) => (
+                            <span
+                              key={index}
+                              className="text-xs bg-gray-600 text-gray-300 px-2 py-1 rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {job.tags.length > 3 && (
+                            <span className="text-xs text-gray-400">
+                              +{job.tags.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                         job.status,
                       )}`}
                     >
+                      <span>{getStatusIcon(job.status)}</span>
                       {job.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-300">
-                    {job.application?.appliedAt
-                      ? formatDate(job.application.appliedAt)
-                      : formatDate(job.createdAt)}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span>📅</span>
+                        <span>
+                          {job.application?.appliedAt
+                            ? formatDate(job.application.appliedAt)
+                            : formatDate(job.createdAt)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {job.application?.appliedAt
+                          ? `${getDaysUntil(
+                              job.application.appliedAt,
+                            )} days ago`
+                          : `${getDaysUntil(job.createdAt)} days ago`}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-300">
-                    {job.nextInterview ? (
-                      <div>
-                        <div>{formatDate(job.nextInterview.scheduledAt)}</div>
-                        <div className="text-xs text-gray-400">
-                          {job.nextInterview.type}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">-</span>
-                    )}
+                    {(() => {
+                      // Priority: Future events only, with smart ordering
+                      const now = new Date();
+
+                      // Check for upcoming interview (most important future event)
+                      if (job.nextInterview) {
+                        const interviewDate = new Date(
+                          job.nextInterview.scheduledAt,
+                        );
+                        if (interviewDate > now) {
+                          return (
+                            <div className="text-blue-400">
+                              <div className="flex items-center gap-1">
+                                <span>🎯</span>
+                                <span className="text-xs">Interview</span>
+                              </div>
+                              <div className="text-sm">
+                                {formatDate(job.nextInterview.scheduledAt)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {job.nextInterview.type}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Check for upcoming deadline
+                      if (job.deadline) {
+                        const deadlineDate = new Date(job.deadline);
+                        if (deadlineDate > now) {
+                          const daysUntil = getDaysUntil(job.deadline);
+                          return (
+                            <div className="text-orange-400">
+                              <div className="flex items-center gap-1">
+                                <span>⏰</span>
+                                <span className="text-xs">
+                                  {daysUntil <= 3 ? 'Urgent' : 'Due'}
+                                </span>
+                              </div>
+                              <div className="text-sm">
+                                {formatDate(job.deadline)}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Check for upcoming follow-up
+                      if (job.application?.nextAction) {
+                        const followUpDate = new Date(
+                          job.application.nextAction,
+                        );
+                        if (followUpDate > now) {
+                          return (
+                            <div className="text-yellow-400">
+                              <div className="flex items-center gap-1">
+                                <span>📞</span>
+                                <span className="text-xs">Follow-up</span>
+                              </div>
+                              <div className="text-sm">
+                                {formatDate(job.application.nextAction)}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Check for overdue items (past but still need attention)
+                      if (job.alerts.isOverdue) {
+                        return (
+                          <div className="text-red-400">
+                            <div className="flex items-center gap-1">
+                              <span>⏰</span>
+                              <span className="text-xs">Overdue</span>
+                            </div>
+                            <div className="text-sm">
+                              {formatDate(job.deadline!)}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (job.alerts.hasFollowUp) {
+                        return (
+                          <div className="text-yellow-400">
+                            <div className="flex items-center gap-1">
+                              <span>📞</span>
+                              <span className="text-xs">Follow-up Due</span>
+                            </div>
+                            <div className="text-sm">
+                              {formatDate(job.application!.nextAction!)}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return <span className="text-gray-500">-</span>;
+                    })()}
                   </td>
                   {salaryOffers.length > 0 && (
                     <td className="px-4 py-3 text-gray-300">
                       {job.salaryOffer ? (
-                        <div>
-                          <div className="text-green-400">Yes</div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1">
+                            <span>💰</span>
+                            <span className="text-green-400">Yes</span>
+                          </div>
                           <div className="text-xs">
                             ${(job.salaryOffer.amount / 100).toLocaleString()}
                           </div>
+                          {job.salaryOffer.expiresAt && (
+                            <div className="text-xs text-gray-500">
+                              Expires: {formatDate(job.salaryOffer.expiresAt)}
+                              {getDaysUntil(job.salaryOffer.expiresAt) < 0 && (
+                                <div className="text-red-500">Expired</div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-gray-500">-</span>
@@ -384,41 +679,69 @@ export default function JobListTable({
                     </td>
                   )}
                   <td className="px-4 py-3 text-gray-300">
-                    <div>
+                    <div className="space-y-1">
                       {job.locationCity && job.locationState && (
-                        <div>
-                          {job.locationCity}, {job.locationState}
+                        <div className="flex items-center gap-1">
+                          <span>📍</span>
+                          <span>
+                            {job.locationCity}, {job.locationState}
+                          </span>
                         </div>
                       )}
                       {job.isRemote && (
-                        <span className="text-xs text-blue-400 bg-blue-900/20 px-2 py-1 rounded">
-                          Remote
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span>🏠</span>
+                          <span className="text-xs text-blue-400 bg-blue-900/20 px-2 py-1 rounded">
+                            Remote
+                          </span>
+                        </div>
+                      )}
+                      {!job.locationCity && !job.isRemote && (
+                        <span className="text-gray-500">-</span>
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-300">
-                    {formatSalary(job.salaryMin, job.salaryMax)}
+                    {formatSalary(job.salaryMin, job.salaryMax) ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span>💵</span>
+                          <span>
+                            {formatSalary(job.salaryMin, job.salaryMax)}
+                          </span>
+                        </div>
+                        {job.salaryType && (
+                          <div className="text-xs text-gray-400">
+                            {job.salaryType}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">-</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">
-                    {formatDate(job.lastActivityAt)}
-                  </td>
+
                   <td className="px-4 py-3">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setEditJob(job)}
-                        className="text-blue-400 hover:text-blue-300 text-sm"
-                      >
-                        Edit
-                      </button>
+                    <div
+                      className="flex space-x-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         onClick={() => {
                           setSelectedJob(job);
                           setApplicationModalOpen(true);
                         }}
-                        className="text-green-400 hover:text-green-300 text-sm"
+                        className="text-green-400 hover:text-green-300 text-sm px-2 py-1 rounded hover:bg-green-900/20 transition-colors"
+                        title="View/edit application"
                       >
                         Application
+                      </button>
+                      <button
+                        onClick={() => handleInterviewClick(job)}
+                        className="text-purple-400 hover:text-purple-300 text-sm px-2 py-1 rounded hover:bg-purple-900/20 transition-colors"
+                        title="Manage interviews"
+                      >
+                        Interview
                       </button>
                     </div>
                   </td>
@@ -458,6 +781,26 @@ export default function JobListTable({
             // TODO: Invalidate queries
           }}
           resumes={[]} // TODO: Pass actual resumes from props
+        />
+      )}
+
+      {/* Interview Modal */}
+      {interviewModalOpen && selectedJob && (
+        <InterviewModal
+          open={interviewModalOpen}
+          interview={selectedInterview}
+          job={selectedJob}
+          onClose={() => {
+            setInterviewModalOpen(false);
+            setSelectedJob(null);
+            setSelectedInterview(null);
+          }}
+          onSaved={() => {
+            setInterviewModalOpen(false);
+            setSelectedJob(null);
+            setSelectedInterview(null);
+            // TODO: Invalidate queries
+          }}
         />
       )}
     </>
