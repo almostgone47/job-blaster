@@ -25,7 +25,6 @@ export default function Jobs() {
 
   const [snoozedDeadlines] = usePersistentSet<string>('snoozedDeadlines');
   const [addOpen, setAddOpen] = useState(false);
-  const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
   const [interviewManagerOpen, setInterviewManagerOpen] = useState(false);
 
   // Initialize view from URL params or localStorage
@@ -75,8 +74,6 @@ export default function Jobs() {
           <KanbanView
             addOpen={addOpen}
             onAddClose={() => setAddOpen(false)}
-            templateManagerOpen={templateManagerOpen}
-            setTemplateManagerOpen={setTemplateManagerOpen}
             interviewManagerOpen={interviewManagerOpen}
             setInterviewManagerOpen={setInterviewManagerOpen}
           />
@@ -90,8 +87,6 @@ export default function Jobs() {
           <KanbanView
             addOpen={addOpen}
             onAddClose={() => setAddOpen(false)}
-            templateManagerOpen={templateManagerOpen}
-            setTemplateManagerOpen={setTemplateManagerOpen}
             interviewManagerOpen={interviewManagerOpen}
             setInterviewManagerOpen={setInterviewManagerOpen}
           />
@@ -198,24 +193,6 @@ export default function Jobs() {
               </button>
             );
           })()}
-
-          {/* Manage Resumes Button */}
-          <button
-            onClick={() => {
-              /* TODO: Open resume modal */
-            }}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Resumes
-          </button>
-
-          {/* Manage Templates Button */}
-          <button
-            onClick={() => setTemplateManagerOpen(true)}
-            className="rounded border border-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
-          >
-            Manage Templates
-          </button>
 
           {/* View Interviews Button */}
           <button

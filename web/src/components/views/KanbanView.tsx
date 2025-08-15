@@ -4,7 +4,6 @@ import {updateJob, listJobs} from '../../api';
 import type {Job, JobStatus, Resume, Interview} from '../../types';
 import {AddJobModal, EditJobModal, ApplicationModal, JobCard} from '../jobs';
 import ResumeModal from '../ResumeModal';
-import TemplateManager from '../TemplateManager';
 import {
   InterviewManager,
   InterviewModal,
@@ -37,8 +36,6 @@ const headerColor: Record<JobStatus, string> = {
 interface KanbanViewProps {
   addOpen: boolean;
   onAddClose: () => void;
-  templateManagerOpen: boolean;
-  setTemplateManagerOpen: (open: boolean) => void;
   interviewManagerOpen: boolean;
   setInterviewManagerOpen: (open: boolean) => void;
 }
@@ -46,8 +43,6 @@ interface KanbanViewProps {
 export default function KanbanView({
   addOpen,
   onAddClose,
-  templateManagerOpen,
-  setTemplateManagerOpen,
   interviewManagerOpen,
   setInterviewManagerOpen,
 }: KanbanViewProps) {
@@ -312,28 +307,7 @@ export default function KanbanView({
         }}
       />
 
-      {templateManagerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={() => setTemplateManagerOpen(false)}
-          />
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border border-gray-700 rounded-lg">
-            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-white">
-                Template Manager
-              </h2>
-              <button
-                onClick={() => setTemplateManagerOpen(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            <TemplateManager />
-          </div>
-        </div>
-      )}
+
 
       {selectedJobForInterview && (
         <InterviewModal

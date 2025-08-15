@@ -1,6 +1,7 @@
 import {BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
 import Jobs from './pages/Jobs';
 import SalaryAnalytics from './pages/SalaryAnalytics';
+import Documents from './pages/Documents';
 import {UserPreferencesProvider} from './contexts/UserPreferences';
 
 export default function App() {
@@ -25,6 +26,12 @@ export default function App() {
                   >
                     💰 Salary Analytics
                   </Link>
+                  <Link
+                    to="/documents"
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    📄 Documents
+                  </Link>
                 </nav>
               </div>
               <div className="flex items-center space-x-4">
@@ -38,6 +45,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Jobs />} />
               <Route path="/salary-analytics" element={<SalaryAnalytics />} />
+              <Route path="/documents/*" element={<Documents />} />
             </Routes>
           </main>
         </div>

@@ -267,7 +267,7 @@ export default function JobCard({
                 if (right === 'APPLIED') {
                   // If moving to APPLIED, move the job AND open application modal
                   onMove(job.id, right);
-                  // The modal will open automatically via the onSuccess callback in Dashboard
+                  // The modal will open automatically via the onSuccess callback in Jobs page
                 } else {
                   // For other statuses, just move the job
                   onMove(job.id, right);
