@@ -143,6 +143,13 @@ export interface CalendarEvent {
   company: string;
   status?: string;
   data: Interview | Job | Application;
+  alerts: {
+    hasDeadline: boolean;
+    hasFollowUp: boolean;
+    hasInterview: boolean;
+    isOverdue: boolean;
+    priority: number;
+  };
 }
 
 export const SalaryType = {

@@ -10,6 +10,13 @@ interface CalendarEvent {
   company: string;
   status?: string;
   data: Interview | Job | Application;
+  alerts: {
+    hasDeadline: boolean;
+    hasFollowUp: boolean;
+    hasInterview: boolean;
+    isOverdue: boolean;
+    priority: number;
+  };
 }
 
 interface EnhancedCalendarProps {
@@ -17,6 +24,8 @@ interface EnhancedCalendarProps {
   jobs: Job[];
   applications: Application[];
   onEventClick: (event: CalendarEvent) => void;
+  showAlertsOnly?: boolean;
+  onShowAlertsOnlyChange?: (show: boolean) => void;
 }
 
 export default function EnhancedCalendar({
@@ -24,6 +33,8 @@ export default function EnhancedCalendar({
   jobs,
   applications,
   onEventClick,
+  showAlertsOnly = false,
+  onShowAlertsOnlyChange,
 }: EnhancedCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -45,43 +56,103 @@ export default function EnhancedCalendar({
   // Get the total number of days in the month
   const daysInMonth = lastDayOfMonth.getDate();
 
-  // Convert all data to calendar events
+  // Convert all data to calendar events with alerts
   const allEvents: CalendarEvent[] = [
-    ...interviews.map((interview) => ({
-      id: interview.id,
-      type: 'interview' as const,
-      title: interview.title,
-      date: new Date(interview.scheduledAt),
-      time: new Date(interview.scheduledAt).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      company: interview.job.company,
-      status: interview.status,
-      data: interview,
-    })),
+    ...interviews.map((interview) => {
+      // For interviews, we don't have deadline info in the simplified job object
+      const hasDeadline = false;
+      const isOverdue = false;
+
+      // Priority: 0 = no alerts, higher = more urgent
+      let priority = 10; // Interview scheduled
+
+      return {
+        id: interview.id,
+        type: 'interview' as const,
+        title: interview.title,
+        date: new Date(interview.scheduledAt),
+        time: new Date(interview.scheduledAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        company: interview.job.company,
+        status: interview.status,
+        data: interview,
+        alerts: {
+          hasDeadline,
+          hasFollowUp: false,
+          hasInterview: true,
+          isOverdue,
+          priority,
+        },
+      };
+    }),
     ...jobs
       .filter((job) => job.deadline)
-      .map((job) => ({
-        id: job.id,
-        type: 'deadline' as const,
-        title: job.title,
-        date: new Date(job.deadline!),
-        company: job.company,
-        status: job.status,
-        data: job,
-      })),
+      .map((job) => {
+        const now = new Date();
+        const hasDeadline = !!job.deadline;
+        const isOverdue =
+          hasDeadline && job.deadline ? new Date(job.deadline) < now : false;
+
+        // Priority: 0 = no alerts, higher = more urgent
+        let priority = 0;
+        if (isOverdue) priority += 100;
+        if (hasDeadline && !isOverdue) priority += 25;
+
+        return {
+          id: job.id,
+          type: 'deadline' as const,
+          title: job.title,
+          date: new Date(job.deadline!),
+          company: job.company,
+          status: job.status,
+          data: job,
+          alerts: {
+            hasDeadline,
+            hasFollowUp: false,
+            hasInterview: false,
+            isOverdue,
+            priority,
+          },
+        };
+      }),
     ...applications
       .filter((app) => app.nextAction)
-      .map((app) => ({
-        id: app.id,
-        type: 'follow-up' as const,
-        title: app.job.title,
-        date: new Date(app.nextAction!),
-        company: app.job.company,
-        status: app.status,
-        data: app,
-      })),
+      .map((app) => {
+        const now = new Date();
+        const hasDeadline = !!app.job.deadline;
+        const hasFollowUp = app.nextAction
+          ? new Date(app.nextAction) <= now
+          : false;
+        const isOverdue =
+          hasDeadline && app.job.deadline
+            ? new Date(app.job.deadline) < now
+            : false;
+
+        // Priority: 0 = no alerts, higher = more urgent
+        let priority = 0;
+        if (isOverdue) priority += 100;
+        if (hasFollowUp) priority += 50;
+        if (hasDeadline && !isOverdue) priority += 25;
+
+        return {
+          id: app.id,
+          type: 'follow-up' as const,
+          title: app.job.title,
+          date: new Date(app.nextAction!),
+          company: app.job.company,
+          status: app.status,
+          data: app,
+          alerts: {
+            hasDeadline,
+            hasFollowUp,
+            hasInterview: false,
+            isOverdue,
+            priority,
+          },
+        };
+      }),
   ];
 
   // Generate calendar days array
@@ -100,11 +171,16 @@ export default function EnhancedCalendar({
       day,
     );
     const dayEvents = allEvents.filter((event) => {
-      return (
+      const dateMatches =
         event.date.getDate() === day &&
         event.date.getMonth() === currentDate.getMonth() &&
-        event.date.getFullYear() === currentDate.getFullYear()
-      );
+        event.date.getFullYear() === currentDate.getFullYear();
+
+      // Apply alert filter if enabled
+      if (showAlertsOnly && !dateMatches) return false;
+      if (showAlertsOnly && event.alerts.priority === 0) return false;
+
+      return dateMatches;
     });
 
     calendarDays.push({day, events: dayEvents, date});
@@ -217,12 +293,78 @@ export default function EnhancedCalendar({
             →
           </button>
         </div>
-        <button
-          onClick={goToToday}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Today
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Alert Filter Toggle */}
+          {onShowAlertsOnlyChange && (
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={showAlertsOnly}
+                onChange={(e) => onShowAlertsOnlyChange(e.target.checked)}
+                className="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+              />
+              Show alerts only
+            </label>
+          )}
+          <button
+            onClick={goToToday}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Today
+          </button>
+        </div>
+      </div>
+
+      {/* Alerts Summary */}
+      <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-gray-300 font-medium">Alerts Summary:</span>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <span className="text-red-400">🔴</span>
+                <span className="text-gray-300">
+                  {allEvents.filter((event) => event.alerts.isOverdue).length}{' '}
+                  Overdue
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-yellow-400">🟡</span>
+                <span className="text-gray-300">
+                  {allEvents.filter((event) => event.alerts.hasFollowUp).length}{' '}
+                  Follow-ups
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-orange-400">🟠</span>
+                <span className="text-gray-300">
+                  {
+                    allEvents.filter(
+                      (event) =>
+                        event.alerts.hasDeadline && !event.alerts.isOverdue,
+                    ).length
+                  }{' '}
+                  Deadlines
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-blue-400">🔵</span>
+                <span className="text-gray-300">
+                  {
+                    allEvents.filter((event) => event.alerts.hasInterview)
+                      .length
+                  }{' '}
+                  Interviews
+                </span>
+              </span>
+            </div>
+          </div>
+          <div className="text-gray-400">
+            Total:{' '}
+            {allEvents.filter((event) => event.alerts.priority > 0).length}{' '}
+            alerts
+          </div>
+        </div>
       </div>
 
       {/* Week Days Header */}
@@ -263,7 +405,15 @@ export default function EnhancedCalendar({
                     <div
                       key={`${event.type}-${event.id}`}
                       onClick={() => onEventClick(event)}
-                      className={`p-2 rounded text-xs cursor-pointer transition-colors ${getEventColor(
+                      className={`p-2 rounded text-xs cursor-pointer transition-colors border-l-4 ${
+                        event.alerts.priority > 0
+                          ? event.alerts.isOverdue
+                            ? 'border-l-red-500 bg-red-900/20'
+                            : event.alerts.hasFollowUp
+                            ? 'border-l-yellow-500 bg-yellow-900/20'
+                            : 'border-l-orange-500 bg-orange-900/20'
+                          : 'border-l-transparent'
+                      } ${getEventColor(
                         event.type,
                         event.status,
                       )} text-white hover:opacity-80`}
@@ -272,9 +422,19 @@ export default function EnhancedCalendar({
                         <span className="text-xs">
                           {getEventIcon(event.type)}
                         </span>
-                        <div className="font-medium truncate">
+                        <div className="font-medium truncate flex-1">
                           {event.title}
                         </div>
+                        {/* Alert indicator */}
+                        {event.alerts.priority > 0 && (
+                          <span className="text-xs flex-shrink-0">
+                            {event.alerts.isOverdue
+                              ? '🔴'
+                              : event.alerts.hasFollowUp
+                              ? '🟡'
+                              : '🟠'}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs opacity-90">
                         {formatEventTime(event)}
