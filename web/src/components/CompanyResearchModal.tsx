@@ -17,6 +17,8 @@ export default function CompanyResearchModal({
   onClose,
   onSaved,
 }: CompanyResearchModalProps) {
+  const [website, setWebsite] = useState('');
+  const [domain, setDomain] = useState('');
   const [insights, setInsights] = useState('');
   const [rating, setRating] = useState<number | ''>('');
   const [pros, setPros] = useState('');
@@ -27,11 +29,15 @@ export default function CompanyResearchModal({
   // Update form when research changes
   useEffect(() => {
     if (research) {
+      setWebsite(research.website || '');
+      setDomain(research.domain || '');
       setInsights(research.insights || '');
       setRating(research.rating || '');
       setPros(research.pros ? research.pros.join('\n') : '');
       setCons(research.cons ? research.cons.join('\n') : '');
     } else {
+      setWebsite('');
+      setDomain('');
       setInsights('');
       setRating('');
       setPros('');
@@ -59,6 +65,8 @@ export default function CompanyResearchModal({
 
       await upsertCompanyResearch({
         companyName,
+        website: website || undefined,
+        domain: domain || undefined,
         insights: insights || '',
         rating: rating ? Number(rating) : undefined,
         pros: prosArray,
@@ -114,6 +122,37 @@ export default function CompanyResearchModal({
         </div>
 
         <div className="space-y-4">
+          {/* Website */}
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
+              Company Website
+            </label>
+            <input
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://company.com"
+              className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Domain */}
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
+              Company Domain
+            </label>
+            <input
+              type="text"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              placeholder="company.com"
+              className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Used for automatically linking jobs to company profiles
+            </p>
+          </div>
+
           {/* Insights */}
           <div>
             <label className="block text-sm font-medium text-gray-200 mb-2">

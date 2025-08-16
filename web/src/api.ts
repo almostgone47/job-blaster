@@ -107,6 +107,8 @@ export async function getCompanyResearch(companyName?: string) {
 
 export async function upsertCompanyResearch(data: {
   companyName: string;
+  website?: string;
+  domain?: string;
   insights?: string;
   rating?: number;
   pros?: string[];
@@ -162,6 +164,8 @@ export async function parseUrl(url: string) {
     company: string;
     source: string;
     faviconUrl?: string;
+    domain?: string | null;
+    isJobPlatform: boolean;
   }>;
 }
 
@@ -364,17 +368,20 @@ export async function listFollowUps(params?: {
 }): Promise<FollowUp[]> {
   const searchParams = new URLSearchParams();
   if (params?.status) searchParams.append('status', params.status);
-  if (params?.applicationId) searchParams.append('applicationId', params.applicationId);
+  if (params?.applicationId)
+    searchParams.append('applicationId', params.applicationId);
   if (params?.due) searchParams.append('due', params.due);
-  
-  const url = `${API}/follow-ups${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const r = await fetch(url, { headers });
+
+  const url = `${API}/follow-ups${
+    searchParams.toString() ? `?${searchParams.toString()}` : ''
+  }`;
+  const r = await fetch(url, {headers});
   if (!r.ok) throw new Error('Failed to list follow-ups');
   return r.json();
 }
 
 export async function getFollowUp(id: string): Promise<FollowUp> {
-  const r = await fetch(`${API}/follow-ups/${id}`, { headers });
+  const r = await fetch(`${API}/follow-ups/${id}`, {headers});
   if (!r.ok) throw new Error('Failed to fetch follow-up');
   return r.json();
 }
@@ -392,11 +399,14 @@ export async function updateFollowUp(
   return r.json();
 }
 
-export async function completeFollowUp(id: string, notes?: string): Promise<FollowUp> {
+export async function completeFollowUp(
+  id: string,
+  notes?: string,
+): Promise<FollowUp> {
   const r = await fetch(`${API}/follow-ups/${id}/complete`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ notes }),
+    body: JSON.stringify({notes}),
   });
   if (!r.ok) throw new Error('Failed to complete follow-up');
   return r.json();
@@ -416,10 +426,13 @@ export async function listFollowUpTemplates(params?: {
 }): Promise<FollowUpTemplate[]> {
   const searchParams = new URLSearchParams();
   if (params?.type) searchParams.append('type', params.type);
-  if (params?.isDefault !== undefined) searchParams.append('isDefault', params.isDefault.toString());
-  
-  const url = `${API}/follow-up-templates${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const r = await fetch(url, { headers });
+  if (params?.isDefault !== undefined)
+    searchParams.append('isDefault', params.isDefault.toString());
+
+  const url = `${API}/follow-up-templates${
+    searchParams.toString() ? `?${searchParams.toString()}` : ''
+  }`;
+  const r = await fetch(url, {headers});
   if (!r.ok) throw new Error('Failed to list follow-up templates');
   return r.json();
 }

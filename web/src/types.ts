@@ -65,6 +65,8 @@ export interface CompanyResearch {
   id: string;
   userId: string;
   companyName: string;
+  website?: string | null;
+  domain?: string | null;
   insights: string;
   rating?: number | null;
   pros: string[];

@@ -21,6 +21,12 @@ export default function CompanyResearchDisplay({
   if (compact) {
     return (
       <div className="text-sm text-gray-300 space-y-1">
+        {research.website && (
+          <div className="flex items-center gap-2">
+            <span className="text-blue-400">🌐</span>
+            <span className="text-gray-400">{research.website}</span>
+          </div>
+        )}
         {research.rating && (
           <div className="flex items-center gap-2">
             <span className="text-yellow-400">★</span>
@@ -61,6 +67,31 @@ export default function CompanyResearchDisplay({
           </div>
         )}
       </div>
+
+      {/* Website and Domain Info */}
+      {(research.website || research.domain) && (
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {research.website && (
+            <div>
+              <div className="text-gray-400 mb-1">Website</div>
+              <a
+                href={research.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 break-all"
+              >
+                {research.website}
+              </a>
+            </div>
+          )}
+          {research.domain && (
+            <div>
+              <div className="text-gray-400 mb-1">Domain</div>
+              <div className="text-white">{research.domain}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Insights */}
       {research.insights && (
