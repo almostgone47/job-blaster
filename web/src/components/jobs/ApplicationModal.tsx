@@ -1,8 +1,9 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import type {Job, Application, AppStatus, Resume} from '../../types';
-import {listTemplates} from '../../api';
+import type {Job, Application, AppStatus, Resume, FollowUp} from '../../types';
+import {listTemplates, listFollowUps} from '../../api';
 import {processTemplate} from '../../utils/templateProcessor';
+import {FollowUpList} from '../follow-ups';
 
 const APP_STATUS_OPTIONS: AppStatus[] = [
   'DRAFT',
@@ -36,12 +37,25 @@ export default function ApplicationModal({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
 
   // Fetch templates
   const {data: templates = []} = useQuery({
     queryKey: ['templates'],
     queryFn: listTemplates,
   });
+
+  // Fetch follow-ups for this application
+  const {data: followUpsData = []} = useQuery({
+    queryKey: ['follow-ups', application?.id],
+    queryFn: () => application ? listFollowUps({ applicationId: application.id }) : Promise.resolve([]),
+    enabled: !!application?.id,
+  });
+
+  // Update follow-ups when data changes
+  useEffect(() => {
+    setFollowUps(followUpsData);
+  }, [followUpsData]);
 
   // Update form when application changes
   useEffect(() => {
@@ -294,9 +308,27 @@ export default function ApplicationModal({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Track responses, interview details, feedback, next steps..."
-              className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
+              className="mt-1 w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:border-blue-500 focus:outline-none resize-none"
             />
           </div>
+
+          {/* Follow-ups Section - Only show for existing applications */}
+          {application && (
+            <div className="border-t border-gray-600 pt-6">
+              <FollowUpList
+                application={application}
+                followUps={followUps}
+                onFollowUpUpdated={(updatedFollowUp) => {
+                  setFollowUps(prev => 
+                    prev.map(f => f.id === updatedFollowUp.id ? updatedFollowUp : f)
+                  );
+                }}
+                onFollowUpDeleted={(followUpId) => {
+                  setFollowUps(prev => prev.filter(f => f.id !== followUpId));
+                }}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <button

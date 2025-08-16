@@ -5,6 +5,7 @@ import {
   listApplications,
   listInterviews,
   listResumes,
+  listFollowUps,
 } from '../../api';
 import type {CalendarEvent} from '../../types';
 import {EnhancedCalendar} from '../calendar';
@@ -36,8 +37,13 @@ export default function CalendarView() {
     queryFn: listResumes,
   });
 
+  const {data: followUps = [], isLoading: followUpsLoading} = useQuery({
+    queryKey: ['follow-ups'],
+    queryFn: () => listFollowUps(),
+  });
+
   const isLoading =
-    jobsLoading || applicationsLoading || interviewsLoading || resumesLoading;
+    jobsLoading || applicationsLoading || interviewsLoading || resumesLoading || followUpsLoading;
 
   // Process data into calendar events with alerts
   const allEvents = useMemo(() => {
@@ -110,54 +116,46 @@ export default function CalendarView() {
       }
     });
 
-    // Add follow-up reminders (next 7 days)
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    // Add follow-ups from the new follow-up system
+    followUps.forEach((followUp) => {
+      const followUpDate = new Date(followUp.scheduledDate);
+      const now = new Date();
+      
+      // Only show active follow-ups (not completed or cancelled)
+      if (followUp.status !== 'COMPLETED' && followUp.status !== 'CANCELLED') {
+        const hasDeadline = false; // Follow-ups don't have deadlines
+        const hasFollowUp = true;
+        const isOverdue = followUp.status === 'OVERDUE';
 
-    applications.forEach((application) => {
-      if (application.nextAction) {
-        const followUpDate = new Date(application.nextAction);
-        if (followUpDate <= sevenDaysFromNow) {
-          const now = new Date();
-          const hasDeadline = !!application.job.deadline;
-          const hasFollowUp = application.nextAction
-            ? new Date(application.nextAction) <= now
-            : false;
-          const isOverdue =
-            hasDeadline && application.job.deadline
-              ? new Date(application.job.deadline) < now
-              : false;
+        // Priority: 0 = no alerts, higher = more urgent
+        let priority = 0;
+        if (isOverdue) priority += 100;
+        if (followUp.status === 'DUE_TODAY') priority += 75;
+        if (followUp.status === 'SCHEDULED') priority += 25;
 
-          // Priority: 0 = no alerts, higher = more urgent
-          let priority = 0;
-          if (isOverdue) priority += 100;
-          if (hasFollowUp) priority += 50;
-          if (hasDeadline && !isOverdue) priority += 25;
-
-          events.push({
-            id: `followup-${application.id}`,
-            type: 'follow-up',
-            title: `Follow-up: ${application.job.title || 'Application'}`,
-            date: followUpDate,
-            time: undefined,
-            company: application.job.company || 'Unknown Company',
-            status: application.status,
-            data: application,
-            alerts: {
-              hasDeadline,
-              hasFollowUp,
-              hasInterview: false,
-              isOverdue,
-              priority,
-            },
-          });
-        }
+        events.push({
+          id: `followup-${followUp.id}`,
+          type: 'follow-up',
+          title: `${followUp.type.replace('_', ' ')}: ${followUp.application.job.title || 'Application'}`,
+          date: followUpDate,
+          time: undefined,
+          company: followUp.application.job.company || 'Unknown Company',
+          status: followUp.status,
+          data: followUp,
+          alerts: {
+            hasDeadline,
+            hasFollowUp,
+            hasInterview: false,
+            isOverdue,
+            priority,
+          },
+        });
       }
     });
 
     // Sort by date
     return events.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [jobs, applications, interviews]);
+  }, [jobs, applications, interviews, followUps]);
 
   // Get upcoming events for the sidebar
   const upcomingEvents = useMemo(() => {

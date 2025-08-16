@@ -1,8 +1,9 @@
 import {useState, useMemo} from 'react';
-import type {CalendarEvent, Job, Application, Interview} from '../../types';
+import type {CalendarEvent, Job, Application, Interview, FollowUp} from '../../types';
 import {EditJobModal} from '../jobs';
 import {ApplicationModal} from '../jobs';
 import InterviewModal from '../interviews/InterviewModal';
+import {FollowUpModal} from '../follow-ups';
 
 interface EnhancedCalendarEventManagerProps {
   event: CalendarEvent | null;
@@ -20,7 +21,7 @@ export default function EnhancedCalendarEventManager({
   resumes,
 }: EnhancedCalendarEventManagerProps) {
   const [activeModal, setActiveModal] = useState<
-    'job' | 'application' | 'interview' | null
+    'job' | 'application' | 'interview' | 'follow-up' | null
   >(null);
 
   // Extract job data from the event
@@ -61,7 +62,9 @@ export default function EnhancedCalendarEventManager({
     } else if (event.type === 'deadline') {
       return event.data as Job;
     } else if (event.type === 'follow-up') {
-      return (event.data as Application).job;
+      // For follow-ups, extract job from the application
+      const followUp = event.data as FollowUp;
+      return followUp.application.job;
     }
     return null;
   }, [event]);
@@ -69,13 +72,20 @@ export default function EnhancedCalendarEventManager({
   // Extract application data
   const application = useMemo(() => {
     if (!event || event.type !== 'follow-up') return null;
-    return event.data as Application;
+    const followUp = event.data as FollowUp;
+    return followUp.application;
   }, [event]);
 
   // Extract interview data
   const interview = useMemo(() => {
     if (!event || event.type !== 'interview') return null;
     return event.data as Interview;
+  }, [event]);
+
+  // Extract follow-up data
+  const followUp = useMemo(() => {
+    if (!event || event.type !== 'follow-up') return null;
+    return event.data as FollowUp;
   }, [event]);
 
   const handleCloseModal = () => {
@@ -189,7 +199,7 @@ export default function EnhancedCalendarEventManager({
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             <button
               onClick={() => setActiveModal('job')}
               className="flex items-center justify-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -211,6 +221,15 @@ export default function EnhancedCalendarEventManager({
               <span>🎤</span>
               <span>Interviews</span>
             </button>
+            {event.type === 'follow-up' && (
+              <button
+                onClick={() => setActiveModal('follow-up')}
+                className="flex items-center justify-center gap-2 p-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
+              >
+                <span>📝</span>
+                <span>Manage Follow-up</span>
+              </button>
+            )}
           </div>
 
           {/* Event Details */}
@@ -301,6 +320,18 @@ export default function EnhancedCalendarEventManager({
           job={job}
           onClose={() => setActiveModal(null)}
           onSaved={handleEventUpdated}
+        />
+      )}
+
+      {/* Follow-up Modal */}
+      {activeModal === 'follow-up' && followUp && application && (
+        <FollowUpModal
+          isOpen={true}
+          onClose={() => setActiveModal(null)}
+          application={application}
+          followUp={followUp}
+          onFollowUpCreated={handleEventUpdated}
+          onFollowUpUpdated={handleEventUpdated}
         />
       )}
     </>

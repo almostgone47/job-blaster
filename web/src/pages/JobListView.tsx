@@ -1,6 +1,6 @@
 import {useQuery} from '@tanstack/react-query';
-import {listJobs, listApplications} from '../api';
-import type {Interview, SalaryOffer} from '../types';
+import {listJobs, listApplications, listFollowUps} from '../api';
+import type {Interview, SalaryOffer, FollowUp} from '../types';
 import {
   JobListStats,
   JobListFilters,
@@ -23,11 +23,16 @@ export default function JobListView() {
     queryFn: listApplications,
   });
 
+  const {data: followUps = [], isLoading: followUpsLoading} = useQuery({
+    queryKey: ['follow-ups'],
+    queryFn: listFollowUps,
+  });
+
   // TODO: Add these API calls when they're implemented
   const interviews: Interview[] = [];
   const salaryOffers: SalaryOffer[] = [];
 
-  const isLoading = jobsLoading || applicationsLoading;
+  const isLoading = jobsLoading || applicationsLoading || followUpsLoading;
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
@@ -46,6 +51,7 @@ export default function JobListView() {
           applications={applications}
           interviews={interviews}
           salaryOffers={salaryOffers}
+          followUps={followUps}
           isLoading={isLoading}
         />
 

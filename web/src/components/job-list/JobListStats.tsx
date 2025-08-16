@@ -1,11 +1,18 @@
 import {useMemo} from 'react';
-import type {Job, Application, Interview, SalaryOffer} from '../../types';
+import type {
+  Job,
+  Application,
+  Interview,
+  SalaryOffer,
+  FollowUp,
+} from '../../types';
 
 interface JobListStatsProps {
   jobs: Job[];
   applications: Application[];
   interviews: Interview[];
   salaryOffers: SalaryOffer[];
+  followUps?: FollowUp[];
   isLoading?: boolean;
 }
 
@@ -15,13 +22,15 @@ interface DashboardCounts {
   offers: number;
   rejections: number;
   responseRate?: number;
+  followUpsDue: number;
 }
 
 function getDashboardCounts(
   jobs: Job[],
-
+  applications: Application[],
   interviews: Interview[],
   salaryOffers: SalaryOffer[],
+  followUps?: FollowUp[],
 ): DashboardCounts {
   // Active Pipeline: non-terminal JobStatus values (exclude REJECTED)
   const activePipeline = jobs.filter((job) => job.status !== 'REJECTED').length;
@@ -63,31 +72,47 @@ function getDashboardCounts(
       ? Math.round((respondedJobs / appliedJobs) * 100)
       : undefined;
 
+  // Follow-ups Due: count of overdue + due today follow-ups
+  const followUpsDue =
+    followUps?.filter(
+      (followUp) =>
+        followUp.status === 'OVERDUE' || followUp.status === 'DUE_TODAY',
+    ).length || 0;
+
   return {
     activePipeline,
     interviewsThisWeek,
     offers,
     rejections,
     responseRate,
+    followUpsDue,
   };
 }
 
 export default function JobListStats({
   jobs,
-
+  applications,
   interviews,
   salaryOffers,
+  followUps,
   isLoading = false,
 }: JobListStatsProps) {
   const counts = useMemo(
-    () => getDashboardCounts(jobs, interviews, salaryOffers),
-    [jobs, interviews, salaryOffers],
+    () =>
+      getDashboardCounts(
+        jobs,
+        applications,
+        interviews,
+        salaryOffers,
+        followUps,
+      ),
+    [jobs, applications, interviews, salaryOffers, followUps],
   );
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        {[...Array(5)].map((_, i) => (
           <div
             key={i}
             className="bg-gray-800 border border-gray-600 rounded-lg p-6 animate-pulse"
@@ -102,7 +127,7 @@ export default function JobListStats({
 
   return (
     <div className="space-y-4 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Active Pipeline */}
         <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
           <div className="text-sm text-gray-400 mb-1">Active Pipeline</div>
@@ -141,6 +166,15 @@ export default function JobListStats({
             {counts.rejections}
           </div>
           <div className="text-xs text-gray-500 mt-1">Job Status: REJECTED</div>
+        </div>
+
+        {/* Follow-ups Due */}
+        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
+          <div className="text-sm text-gray-400 mb-1">Follow-ups Due</div>
+          <div className="text-3xl font-bold text-orange-400">
+            {counts.followUpsDue}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">Overdue + Due Today</div>
         </div>
       </div>
 

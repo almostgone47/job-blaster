@@ -51,11 +51,14 @@ export interface Application {
   appliedAt?: string | null;
   nextAction?: string | null;
   notes?: string | null;
+  nextFollowUpDate?: string | null;
+  lastFollowUpDate?: string | null;
   createdAt: string;
   updatedAt: string;
   job: Job;
   jobTitle?: string; // For calendar compatibility
   company?: string; // For calendar compatibility
+  followUps?: FollowUp[];
 }
 
 export interface CompanyResearch {
@@ -134,6 +137,49 @@ export interface Interview {
   } | null;
 }
 
+export type FollowUpType =
+  | 'POST_APPLICATION'
+  | 'POST_INTERVIEW'
+  | 'GENERAL'
+  | 'SALARY_NEGOTIATION'
+  | 'THANK_YOU';
+
+export type FollowUpStatus =
+  | 'SCHEDULED'
+  | 'DUE_TODAY'
+  | 'OVERDUE'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface FollowUpTemplate {
+  id: string;
+  name: string;
+  description: string;
+  message: string;
+  type: FollowUpType;
+  isDefault: boolean;
+  isPremium: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FollowUp {
+  id: string;
+  userId: string;
+  applicationId: string;
+  scheduledDate: string;
+  completedDate?: string | null;
+  type: FollowUpType;
+  templateId?: string | null;
+  template?: FollowUpTemplate | null;
+  message?: string | null;
+  status: FollowUpStatus;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  application: Application;
+}
+
 export interface CalendarEvent {
   id: string;
   type: 'interview' | 'deadline' | 'follow-up';
@@ -142,7 +188,7 @@ export interface CalendarEvent {
   time?: string | null;
   company: string;
   status?: string;
-  data: Interview | Job | Application;
+  data: Interview | Job | Application | FollowUp;
   alerts: {
     hasDeadline: boolean;
     hasFollowUp: boolean;

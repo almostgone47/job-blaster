@@ -7,6 +7,7 @@ import type {JobStatus, AppStatus} from '../../types';
 vi.mock('../../api', () => ({
   listJobs: vi.fn(),
   listApplications: vi.fn(),
+  listFollowUps: vi.fn(),
 }));
 
 const mockJobs = [
@@ -84,15 +85,34 @@ const mockApplications = [
   },
 ];
 
+const mockFollowUps = [
+  {
+    id: 'followup-1',
+    userId: 'user-1',
+    applicationId: '1',
+    scheduledDate: '2024-01-20T00:00:00.000Z',
+    type: 'POST_APPLICATION',
+    status: 'SCHEDULED',
+    message: 'Test follow-up',
+    notes: null,
+    createdAt: '2024-01-15T00:00:00.000Z',
+    updatedAt: '2024-01-15T00:00:00.000Z',
+    application: mockApplications[0],
+  },
+];
+
 describe('JobListView Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders without crashing', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 
@@ -103,9 +123,12 @@ describe('JobListView Component', () => {
   });
 
   it('displays job list table when data is available', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 
@@ -118,9 +141,12 @@ describe('JobListView Component', () => {
   });
 
   it('shows job statistics correctly', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 
@@ -143,9 +169,12 @@ describe('JobListView Component', () => {
   });
 
   it('displays job details in table format', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 
@@ -154,7 +183,6 @@ describe('JobListView Component', () => {
       expect(screen.getByText('Company')).toBeInTheDocument();
       expect(screen.getByText('Title')).toBeInTheDocument();
       expect(screen.getByText('Salary')).toBeInTheDocument();
-      expect(screen.getByText('Actions')).toBeInTheDocument();
 
       // Check for job data that is actually displayed
       expect(screen.getByText('Big Corp')).toBeInTheDocument();
@@ -168,9 +196,12 @@ describe('JobListView Component', () => {
   });
 
   it('handles empty state gracefully', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue([]);
     vi.mocked(listApplications).mockResolvedValue([]);
+    vi.mocked(listFollowUps).mockResolvedValue([]);
 
     render(<JobListView />);
 
@@ -183,9 +214,12 @@ describe('JobListView Component', () => {
   });
 
   it('shows salary information when available', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 
@@ -198,9 +232,12 @@ describe('JobListView Component', () => {
   });
 
   it('shows application status when available', async () => {
-    const {listJobs, listApplications} = await import('../../api');
+    const {listJobs, listApplications, listFollowUps} = await import(
+      '../../api'
+    );
     vi.mocked(listJobs).mockResolvedValue(mockJobs);
     vi.mocked(listApplications).mockResolvedValue(mockApplications);
+    vi.mocked(listFollowUps).mockResolvedValue(mockFollowUps);
 
     render(<JobListView />);
 

@@ -339,6 +339,91 @@ export async function createSalaryHistory(payload: {
   return r.json();
 }
 
+// Follow-up API functions
+export async function createFollowUp(payload: {
+  applicationId: string;
+  scheduledDate: Date;
+  type: string;
+  templateId?: string;
+  message?: string;
+  notes?: string;
+}) {
+  const r = await fetch(`${API}/follow-ups`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error('Failed to create follow-up');
+  return r.json();
+}
+
+export async function listFollowUps(params?: {
+  status?: string;
+  applicationId?: string;
+  due?: string;
+}): Promise<FollowUp[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.append('status', params.status);
+  if (params?.applicationId) searchParams.append('applicationId', params.applicationId);
+  if (params?.due) searchParams.append('due', params.due);
+  
+  const url = `${API}/follow-ups${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const r = await fetch(url, { headers });
+  if (!r.ok) throw new Error('Failed to list follow-ups');
+  return r.json();
+}
+
+export async function getFollowUp(id: string): Promise<FollowUp> {
+  const r = await fetch(`${API}/follow-ups/${id}`, { headers });
+  if (!r.ok) throw new Error('Failed to fetch follow-up');
+  return r.json();
+}
+
+export async function updateFollowUp(
+  id: string,
+  patch: Partial<FollowUp>,
+): Promise<FollowUp> {
+  const r = await fetch(`${API}/follow-ups/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error('Failed to update follow-up');
+  return r.json();
+}
+
+export async function completeFollowUp(id: string, notes?: string): Promise<FollowUp> {
+  const r = await fetch(`${API}/follow-ups/${id}/complete`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ notes }),
+  });
+  if (!r.ok) throw new Error('Failed to complete follow-up');
+  return r.json();
+}
+
+export async function deleteFollowUp(id: string) {
+  const r = await fetch(`${API}/follow-ups/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!r.ok) throw new Error('Failed to delete follow-up');
+}
+
+export async function listFollowUpTemplates(params?: {
+  type?: string;
+  isDefault?: boolean;
+}): Promise<FollowUpTemplate[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.type) searchParams.append('type', params.type);
+  if (params?.isDefault !== undefined) searchParams.append('isDefault', params.isDefault.toString());
+  
+  const url = `${API}/follow-up-templates${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const r = await fetch(url, { headers });
+  if (!r.ok) throw new Error('Failed to list follow-up templates');
+  return r.json();
+}
+
 // types import
 import type {
   Job,
@@ -349,4 +434,6 @@ import type {
   SalaryOffer,
   SalaryHistory,
   SalaryAnalytics,
+  FollowUp,
+  FollowUpTemplate,
 } from './types';
